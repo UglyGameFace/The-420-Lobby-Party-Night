@@ -19,7 +19,7 @@ Working branch:
 `prototype/hotbox-havoc-local-visuals`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING AFTER BUILD #12 HARDENING**
+**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #13 GROUNDING-TEST FIX**
 
 ## Outcome
 
@@ -247,11 +247,42 @@ Hardening implemented after Build #12:
 Do not guess at the hidden failing assertion. The next Unity run must expose the exact
 test result if anything still fails.
 
+## Build #13 findings
+
+Unity Build Automation Build #13 checked out exact revision:
+
+`13c71e4db43b288e33fb171058a7667a123fd989`
+
+Confirmed by the durable Play Mode result diagnostics:
+- all five Hotbox Havoc Play Mode tests passed;
+- camera semantics passed;
+- foundation local-player composition passed;
+- movement/collision test passed;
+- the sole failing test was
+  `LocalPlayerRuntimeTests.JumpUsesExplicitGravityAndReturnsToGround`;
+- NUnit reported `Expected: True / But was: False`;
+- Edit Mode passed;
+- the real Hotbox Havoc visual PNG capture passed.
+
+Root cause:
+the jump test was a synchronous `[Test]` that called
+`CharacterController.Move` through `motor.Tick` 128 times inside one Unity frame.
+`CharacterController.isGrounded` describes contact during the most recent Move call,
+while production movement advances once per frame. The test therefore did not model the
+actual runtime lifecycle and produced a cloud-only grounding failure.
+
+Correction:
+- convert the jump test to `[UnityTest]`;
+- advance one motor step per Unity frame while settling and while completing the jump;
+- add distinct pre-jump and post-landing assertion messages;
+- include NUnit stack traces in durable Play Mode result diagnostics;
+- add static regression validation requiring this grounding test to remain frame-accurate.
+
+No gameplay movement/camera/Hotbox runtime logic was changed for this correction.
+
 ## Next step
 
-Pass GitHub static CI on the exact Build #12 hardening head and review the complete
-delta. Then run one new Unity Build Automation build on that exact frozen revision.
-If Play Mode fails, use the emitted PARTY_NIGHT_TEST_RESULT lines to fix the exact
-failing test/root cause rather than inferring from aggregate Unity output. If it passes,
-continue through exact-revision visual evidence validation, Linux Player export and
-artifact inspection before merge.
+Pass GitHub static CI on the exact Build #13 grounding-test-fix head and review the
+complete delta. Then run a new Unity Build Automation validation build on that exact
+frozen SHA. Edit Mode and all nine Play Mode tests must pass before pre-export visual
+evidence validation, Linux Player export and artifact inspection.
