@@ -46,6 +46,18 @@ namespace PartyNight.Gameplay.Tests
             yield return null;
         }
 
+        [TearDown]
+        public void ReportTestResult()
+        {
+            var context = TestContext.CurrentContext;
+            var outcome = context.Result.Outcome;
+            var message = context.Result.Message ?? string.Empty;
+
+            Debug.Log(
+                $"PARTY_NIGHT_TEST_RESULT | {context.Test.FullName} | " +
+                $"{outcome.Status} | {outcome.Label ?? string.Empty} | {message}");
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {
