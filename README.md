@@ -38,7 +38,7 @@ Current project pin:
 - Unity Transport 2.7.4
 - Unity Test Framework 1.6.0
 
-See `docs/UNITY_SETUP.md` and `docs/DEPENDENCIES.md`.
+See `docs/UNITY_SETUP.md`, `docs/UNITY_CLOUD_VALIDATION.md`, and `docs/DEPENDENCIES.md`.
 
 Package presence is not a claim that gameplay networking, input actions, URP assets, or builds have already been implemented or validated.
 
@@ -67,6 +67,7 @@ Closed consoles are explicitly out of scope.
 - `ACTIVE_TASK.md` is the source of truth for current engineering state.
 - Never commit secrets or Unity-generated folders such as `Library/`, `Temp/`, `Logs/`, or `Obj/`.
 - Unity `.meta` files are source-controlled and must not be casually regenerated.
+- Superseded, obsolete, duplicate, temporary, debug, backup, and abandoned code/artifacts must be removed from the affected area before a task can close. Git history is the backup.
 
 ## Status
 
