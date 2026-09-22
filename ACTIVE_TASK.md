@@ -19,7 +19,7 @@ Working branch:
 `prototype/hotbox-havoc-local-visuals`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING AFTER BUILD #13 GROUNDING-TEST FIX**
+**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #14 MOTOR GROUNDING FIX**
 
 ## Outcome
 
@@ -264,14 +264,11 @@ Confirmed by the durable Play Mode result diagnostics:
 - Edit Mode passed;
 - the real Hotbox Havoc visual PNG capture passed.
 
-Root cause:
-the jump test was a synchronous `[Test]` that called
-`CharacterController.Move` through `motor.Tick` 128 times inside one Unity frame.
-`CharacterController.isGrounded` describes contact during the most recent Move call,
-while production movement advances once per frame. The test therefore did not model the
-actual runtime lifecycle and produced a cloud-only grounding failure.
+Initial hypothesis after Build #13:
+the jump test's synchronous `[Test]` lifecycle appeared to be the source of the
+grounding failure. Build #14 disproved that as the complete root cause.
 
-Correction:
+Build #13 correction:
 - convert the jump test to `[UnityTest]`;
 - advance one motor step per Unity frame while settling and while completing the jump;
 - add distinct pre-jump and post-landing assertion messages;
@@ -280,9 +277,47 @@ Correction:
 
 No gameplay movement/camera/Hotbox runtime logic was changed for this correction.
 
+## Build #14 findings
+
+Unity Build Automation Build #14 checked out exact revision:
+
+`280d1b361dbdca0ea3bb4a46ac3ceaf1fd7d31f5`
+
+Confirmed:
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- Edit Mode passed;
+- all five Hotbox Havoc Play Mode tests passed;
+- camera semantics passed;
+- foundation local-player composition passed;
+- movement/collision passed;
+- the real Hotbox Havoc PNG capture passed;
+- the sole failing test remained
+  `LocalPlayerRuntimeTests.JumpUsesExplicitGravityAndReturnsToGround`.
+
+The improved diagnostics localized the failure to the pre-jump assertion at
+`LocalPlayerRuntimeTests.cs:151` after eight real Unity frames:
+`Player must settle onto the foundation ground before jumping. Expected: True. But was: False.`
+
+This disproves the Build #13 hypothesis that synchronous test execution was the complete
+cause. The actual runtime defect is that `PartyNightCharacterMotor.IsGrounded` delegated
+entirely to `CharacterController.isGrounded`, even though the motor already receives the
+authoritative `CollisionFlags` returned by every `CharacterController.Move`.
+
+Build #14 correction:
+- persist the most recent `CharacterController.Move` collision flags in the motor;
+- define the motor grounded contract from `CollisionFlags.Below` with Unity native
+  `isGrounded` as a fallback;
+- use that motor-owned grounded contract for jump gating;
+- clear persisted collision flags when motion is reset;
+- statically guard the motor-owned grounding contract;
+- preserve player Y, vertical velocity and native grounded state in future grounding
+  assertion failures.
+
+No Hotbox round, visual, camera or input logic changed.
+
 ## Next step
 
-Pass GitHub static CI on the exact Build #13 grounding-test-fix head and review the
-complete delta. Then run a new Unity Build Automation validation build on that exact
-frozen SHA. Edit Mode and all nine Play Mode tests must pass before pre-export visual
-evidence validation, Linux Player export and artifact inspection.
+Pass GitHub static CI on the exact Build #14 motor-grounding-fix head and review the
+complete delta. Freeze that SHA. Then run one new Unity Build Automation validation
+build. All nine Play Mode tests must pass before pre-export exact-revision visual
+validation, Linux Player export and artifact inspection.
