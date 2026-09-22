@@ -29,7 +29,7 @@ Additional minigames remain backlog items until the shared Hotbox Havoc foundati
 
 ## Unity foundation
 
-Current project pin:
+Validated project pin:
 
 - Unity 6000.3.24f1
 - URP 17.3.0
@@ -38,9 +38,11 @@ Current project pin:
 - Unity Transport 2.7.4
 - Unity Test Framework 1.6.0
 
-See `docs/UNITY_SETUP.md`, `docs/UNITY_CLOUD_VALIDATION.md`, and `docs/DEPENDENCIES.md`.
+Unity Build Automation has opened the project on the pinned editor, resolved the package graph, compiled Party Night scripts, passed the Edit Mode smoke test, and passed the pre-export foundation validator.
 
-Package presence is not a claim that gameplay networking, input actions, URP assets, or builds have already been implemented or validated.
+The first cloud Player export intentionally stopped because no build scene exists yet. A real scene belongs to the next focused task and was not fabricated just to make CI green.
+
+See `docs/UNITY_SETUP.md`, `docs/UNITY_CLOUD_VALIDATION.md`, and `docs/DEPENDENCIES.md`.
 
 ## Supported platform families
 
@@ -71,4 +73,8 @@ Closed consoles are explicitly out of scope.
 
 ## Status
 
-The repository bootstrap is complete. The real Unity project foundation is the current active task. No Hotbox Havoc gameplay implementation has been validated yet.
+Repository bootstrap and the shared Unity project foundation are complete and post-merge verified.
+
+No Hotbox Havoc gameplay implementation has been validated yet.
+
+The next focused task is the first real Unity scene, URP project assets, and abstract input foundation.
