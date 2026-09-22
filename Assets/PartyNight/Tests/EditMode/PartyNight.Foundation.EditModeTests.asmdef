@@ -2,7 +2,8 @@
   "name": "PartyNight.Foundation.EditModeTests",
   "rootNamespace": "PartyNight.Foundation.Tests",
   "references": [
-    "PartyNight.Foundation"
+    "PartyNight.Foundation",
+    "PartyNight.Foundation.Editor"
   ],
   "includePlatforms": [
     "Editor"

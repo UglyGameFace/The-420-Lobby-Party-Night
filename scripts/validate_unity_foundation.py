@@ -9,6 +9,17 @@ EXPECTED_UNITY = "6000.3.24f1"
 EXPECTED_REVISION = "4e7b9b5b6244"
 EXPECTED_BUILD_SCENE = "Assets/PartyNight/Scenes/PartyNightFoundation.unity"
 EXPECTED_BUILD_SCENE_GUID = "7b8f6f38b4e84b4aa2bb5dc6b124d5a1"
+
+EXPECTED_PIPELINE_ASSET = "Assets/PartyNight/Settings/PartyNightURP.asset"
+EXPECTED_PIPELINE_GUID = "90b464dba38a24ac9935f6ce106d4e73"
+EXPECTED_RENDERER_ASSET = "Assets/PartyNight/Settings/PartyNightUniversalRenderer.asset"
+EXPECTED_RENDERER_GUID = "2cc4cedf4b9a943c09551b040e743ef4"
+EXPECTED_GLOBAL_SETTINGS_ASSET = "Assets/PartyNight/Settings/PartyNightURPGlobalSettings.asset"
+EXPECTED_GLOBAL_SETTINGS_GUID = "1858f607251d94a518662b55b78f6619"
+EXPECTED_VOLUME_PROFILE_ASSET = "Assets/PartyNight/Settings/PartyNightDefaultVolumeProfile.asset"
+EXPECTED_VOLUME_PROFILE_GUID = "c55b34362de09465f8a9b944f73c290e"
+EXPECTED_SETTINGS_FOLDER_GUID = "6235a995f08434dfc81e53495c5c2027"
+
 EXPECTED_PACKAGES = {
     "com.unity.inputsystem": "1.20.0",
     "com.unity.netcode.gameobjects": "2.13.2",
@@ -16,6 +27,7 @@ EXPECTED_PACKAGES = {
     "com.unity.test-framework": "1.6.0",
     "com.unity.transport": "2.7.4",
 }
+
 FORBIDDEN_ROOT_DIRS = {
     "Library",
     "Temp",
@@ -42,6 +54,8 @@ FORBIDDEN_STALE_DIR_NAMES = {
     "temporary",
 }
 TEXT_SUFFIXES = {
+    ".asset",
+    ".asmdef",
     ".cs",
     ".json",
     ".md",
@@ -52,18 +66,18 @@ TEXT_SUFFIXES = {
     ".yaml",
 }
 
-
 def fail(message: str) -> None:
     print(f"ERROR: {message}", file=sys.stderr)
     raise SystemExit(1)
 
+def read_required(relative: str) -> str:
+    path = ROOT / relative
+    if not path.is_file():
+        fail(f"missing {relative}")
+    return path.read_text(encoding="utf-8")
 
 def validate_project_version() -> None:
-    path = ROOT / "ProjectSettings" / "ProjectVersion.txt"
-    if not path.is_file():
-        fail(f"missing {path.relative_to(ROOT)}")
-
-    content = path.read_text(encoding="utf-8")
+    content = read_required("ProjectSettings/ProjectVersion.txt")
     if f"m_EditorVersion: {EXPECTED_UNITY}" not in content:
         fail(f"ProjectVersion.txt does not pin Unity {EXPECTED_UNITY}")
     expected_with_revision = (
@@ -71,7 +85,6 @@ def validate_project_version() -> None:
     )
     if expected_with_revision not in content:
         fail("ProjectVersion.txt does not pin the expected Unity changeset")
-
 
 def validate_manifest() -> None:
     path = ROOT / "Packages" / "manifest.json"
@@ -88,16 +101,10 @@ def validate_manifest() -> None:
         if actual != expected_version:
             fail(f"{package}: expected {expected_version}, found {actual!r}")
 
-
-def validate_lockfile_policy() -> None:
+def validate_lockfile() -> None:
     path = ROOT / "Packages" / "packages-lock.json"
     if not path.is_file():
-        print(
-            "::warning file=Packages/packages-lock.json::"
-            "Unity package lock is not source-controlled yet. "
-            "Capture the authoritative lock from the pinned editor before gameplay expands."
-        )
-        return
+        fail("missing authoritative Packages/packages-lock.json")
 
     try:
         lock = json.loads(path.read_text(encoding="utf-8"))
@@ -119,7 +126,6 @@ def validate_lockfile_policy() -> None:
                 f"found {actual_version!r}"
             )
 
-
 def validate_assets_metadata() -> None:
     assets = ROOT / "Assets"
     if not assets.is_dir():
@@ -136,7 +142,6 @@ def validate_assets_metadata() -> None:
         meta = asset.with_name(asset.name + ".meta")
         if not meta.is_file():
             fail(f"missing asset metadata: {meta.relative_to(ROOT)}")
-
 
 def validate_meta_guids() -> None:
     seen = {}
@@ -161,7 +166,6 @@ def validate_meta_guids() -> None:
                 f"duplicate Unity GUID {guid} in {previous} and {meta.relative_to(ROOT)}"
             )
         seen[guid] = meta.relative_to(ROOT)
-
 
 def validate_assembly_definitions() -> None:
     asmdefs = {}
@@ -204,6 +208,113 @@ def validate_assembly_definitions() -> None:
                     f"{reference!r}"
                 )
 
+def require_meta_guid(asset_path: str, expected_guid: str) -> None:
+    meta = ROOT / f"{asset_path}.meta"
+    if not meta.is_file():
+        fail(f"missing metadata for {asset_path}")
+    if f"guid: {expected_guid}" not in meta.read_text(encoding="utf-8"):
+        fail(f"{asset_path}.meta does not preserve expected GUID {expected_guid}")
+
+def validate_authoritative_project_settings() -> None:
+    required_project_settings = (
+        "ProjectSettings/EditorSettings.asset",
+        "ProjectSettings/ProjectSettings.asset",
+        "ProjectSettings/GraphicsSettings.asset",
+        "ProjectSettings/QualitySettings.asset",
+    )
+    for relative in required_project_settings:
+        read_required(relative)
+
+    settings_folder_meta = read_required("Assets/PartyNight/Settings.meta")
+    if f"guid: {EXPECTED_SETTINGS_FOLDER_GUID}" not in settings_folder_meta:
+        fail("Party Night Settings folder GUID changed unexpectedly")
+
+    pipeline = read_required(EXPECTED_PIPELINE_ASSET)
+    renderer = read_required(EXPECTED_RENDERER_ASSET)
+    global_settings = read_required(EXPECTED_GLOBAL_SETTINGS_ASSET)
+    read_required(EXPECTED_VOLUME_PROFILE_ASSET)
+
+    require_meta_guid(EXPECTED_PIPELINE_ASSET, EXPECTED_PIPELINE_GUID)
+    require_meta_guid(EXPECTED_RENDERER_ASSET, EXPECTED_RENDERER_GUID)
+    require_meta_guid(EXPECTED_GLOBAL_SETTINGS_ASSET, EXPECTED_GLOBAL_SETTINGS_GUID)
+    require_meta_guid(EXPECTED_VOLUME_PROFILE_ASSET, EXPECTED_VOLUME_PROFILE_GUID)
+
+    if f"guid: {EXPECTED_RENDERER_GUID}" not in pipeline:
+        fail("Party Night URP asset does not reference the authoritative renderer")
+    if "m_DefaultRendererIndex: 0" not in pipeline:
+        fail("Party Night URP asset default renderer index is not 0")
+
+    if f"guid: {EXPECTED_VOLUME_PROFILE_GUID}" not in global_settings:
+        fail("Party Night URP Global Settings do not reference the authoritative volume profile")
+
+    graphics = read_required("ProjectSettings/GraphicsSettings.asset")
+    if f"guid: {EXPECTED_PIPELINE_GUID}" not in graphics:
+        fail("GraphicsSettings does not reference Party Night URP")
+    if f"guid: {EXPECTED_GLOBAL_SETTINGS_GUID}" not in graphics:
+        fail("GraphicsSettings does not register Party Night URP Global Settings")
+
+    editor = read_required("ProjectSettings/EditorSettings.asset")
+    if "m_SerializationMode: 2" not in editor:
+        fail("EditorSettings must keep Force Text serialization")
+
+    project = read_required("ProjectSettings/ProjectSettings.asset")
+    if "productName: 'The 420 Lobby: Party Night'" not in project:
+        fail("ProjectSettings product name does not match Party Night")
+
+    quality = read_required("ProjectSettings/QualitySettings.asset")
+    overrides = re.findall(
+        r"^\s*customRenderPipeline:\s*(.+)$",
+        quality,
+        flags=re.MULTILINE,
+    )
+    if not overrides:
+        fail("QualitySettings contains no render-pipeline ownership entries")
+    if any(value.strip() != "{fileID: 0}" for value in overrides):
+        fail("a quality level overrides the authoritative Party Night render pipeline")
+
+    if renderer.count("m_Name: PartyNightUniversalRenderer") != 1:
+        fail("authoritative Universal Renderer asset has unexpected identity")
+
+def validate_render_pipeline_assembly_references() -> None:
+    path = ROOT / "Assets" / "PartyNight" / "Editor" / "PartyNight.Foundation.Editor.asmdef"
+    if not path.is_file():
+        fail("missing PartyNight.Foundation.Editor.asmdef")
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f"invalid PartyNight.Foundation.Editor.asmdef: {exc}")
+
+    references = data.get("references")
+    if not isinstance(references, list):
+        fail("PartyNight.Foundation.Editor.asmdef references must be a list")
+
+    required = {
+        "PartyNight.Foundation",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+    }
+    missing = sorted(required.difference(references))
+    if missing:
+        fail(
+            "PartyNight.Foundation.Editor.asmdef is missing required references: "
+            + ", ".join(missing)
+        )
+
+
+def validate_capture_cleanup() -> None:
+    forbidden = (
+        "Assets/PartyNight/Editor/AuthoritativeSettingsBootstrap.cs",
+        "Assets/PartyNight/Editor/AuthoritativeSettingsBootstrap.cs.meta",
+        ".github/authoritative-settings-capture.part1.b64",
+        ".github/authoritative-settings-capture.part2.b64",
+        ".github/authoritative-settings-capture.part3.b64",
+        ".github/authoritative-settings-capture.part4.b64",
+        ".github/workflows/import-authoritative-settings.yml",
+    )
+    leftovers = [relative for relative in forbidden if (ROOT / relative).exists()]
+    if leftovers:
+        fail("temporary settings-capture implementation remains: " + ", ".join(leftovers))
 
 def validate_build_scene() -> None:
     scene = ROOT / EXPECTED_BUILD_SCENE
@@ -235,7 +346,7 @@ def validate_build_scene() -> None:
         fail("foundation scene is not enabled with the expected path/GUID")
 
     if settings_text.count("  - enabled: 1") != 1:
-        fail("exactly one build scene must be enabled during the foundation scene task")
+        fail("exactly one build scene must be enabled")
 
     scene_paths = [
         line.strip()
@@ -247,7 +358,6 @@ def validate_build_scene() -> None:
 
     if "m_Script:" in scene_text:
         fail("foundation scene must not contain serialized MonoBehaviour script references yet")
-
 
 def validate_csharp_namespace_hygiene() -> None:
     party_night_assets = ROOT / "Assets" / "PartyNight"
@@ -264,12 +374,10 @@ def validate_csharp_namespace_hygiene() -> None:
             if forbidden in text:
                 fail(f"{path.relative_to(ROOT)}: {reason}")
 
-
 def validate_generated_directories_absent() -> None:
     present = sorted(name for name in FORBIDDEN_ROOT_DIRS if (ROOT / name).exists())
     if present:
         fail("generated/build directories must not be tracked: " + ", ".join(present))
-
 
 def validate_no_stale_artifacts() -> None:
     for path in ROOT.rglob("*"):
@@ -282,7 +390,6 @@ def validate_no_stale_artifacts() -> None:
         if path.is_file() and path.suffix.lower() in FORBIDDEN_STALE_SUFFIXES:
             fail(f"stale/superseded file is not allowed: {path.relative_to(ROOT)}")
 
-
 def validate_conflict_markers() -> None:
     markers = ("<" * 7, ">" * 7)
     for path in ROOT.rglob("*"):
@@ -293,21 +400,22 @@ def validate_conflict_markers() -> None:
             if marker in text:
                 fail(f"merge conflict marker {marker!r} found in {path.relative_to(ROOT)}")
 
-
 def main() -> None:
     validate_project_version()
     validate_manifest()
-    validate_lockfile_policy()
+    validate_lockfile()
     validate_assets_metadata()
     validate_meta_guids()
     validate_assembly_definitions()
+    validate_authoritative_project_settings()
+    validate_render_pipeline_assembly_references()
+    validate_capture_cleanup()
     validate_build_scene()
     validate_csharp_namespace_hygiene()
     validate_generated_directories_absent()
     validate_no_stale_artifacts()
     validate_conflict_markers()
     print("Party Night Unity foundation static validation passed.")
-
 
 if __name__ == "__main__":
     main()
