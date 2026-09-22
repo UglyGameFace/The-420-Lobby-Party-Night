@@ -275,6 +275,33 @@ def validate_authoritative_project_settings() -> None:
     if renderer.count("m_Name: PartyNightUniversalRenderer") != 1:
         fail("authoritative Universal Renderer asset has unexpected identity")
 
+def validate_render_pipeline_assembly_references() -> None:
+    path = ROOT / "Assets" / "PartyNight" / "Editor" / "PartyNight.Foundation.Editor.asmdef"
+    if not path.is_file():
+        fail("missing PartyNight.Foundation.Editor.asmdef")
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f"invalid PartyNight.Foundation.Editor.asmdef: {exc}")
+
+    references = data.get("references")
+    if not isinstance(references, list):
+        fail("PartyNight.Foundation.Editor.asmdef references must be a list")
+
+    required = {
+        "PartyNight.Foundation",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+    }
+    missing = sorted(required.difference(references))
+    if missing:
+        fail(
+            "PartyNight.Foundation.Editor.asmdef is missing required references: "
+            + ", ".join(missing)
+        )
+
+
 def validate_capture_cleanup() -> None:
     forbidden = (
         "Assets/PartyNight/Editor/AuthoritativeSettingsBootstrap.cs",
@@ -381,6 +408,7 @@ def main() -> None:
     validate_meta_guids()
     validate_assembly_definitions()
     validate_authoritative_project_settings()
+    validate_render_pipeline_assembly_references()
     validate_capture_cleanup()
     validate_build_scene()
     validate_csharp_namespace_hygiene()

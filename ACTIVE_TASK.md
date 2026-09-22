@@ -42,7 +42,7 @@ Native controller support remains a hard requirement for the later input task ac
 
 ## Status
 
-**VALIDATION — FINAL COMMITTED STATE**
+**IMPLEMENTATION FIX — BUILD #5 ROOT-CAUSED**
 
 Repository:
 `UglyGameFace/The-420-Lobby-Party-Night`
@@ -161,6 +161,30 @@ The final task result must not contain:
 - backup/temp copies;
 - generated Unity working directories.
 
+## Build #5 evidence and root cause
+
+Unity Build Automation build #5 ran on exact head:
+
+`61a43d930ac7c574c7a9f2d49af3abbc4818dab2`
+
+Confirmed:
+- the correct branch and exact commit were checked out;
+- Unity `6000.3.24f1 (4e7b9b5b6244)` launched;
+- pinned packages resolved;
+- compilation failed before tests could run.
+
+Root cause:
+- `ProjectFoundationValidator.cs` uses `UnityEngine.Rendering.VolumeProfile`;
+- `VolumeProfile` belongs to `Unity.RenderPipelines.Core.Runtime`;
+- `PartyNight.Foundation.Editor.asmdef` referenced `Unity.RenderPipelines.Universal.Runtime` but not Core Runtime;
+- the compiler therefore emitted CS0246 for `VolumeProfile`.
+
+Fix:
+- add a direct `Unity.RenderPipelines.Core.Runtime` reference;
+- add a static regression check requiring the editor assembly to reference both Core Runtime and Universal Runtime.
+
+Build #5 does not satisfy the merge gate because Edit Mode tests, pre-export validation, and Player export never ran after the compilation failure.
+
 ## Remaining validation before merge
 
 1. GitHub static CI must pass on the exact final implementation head.
@@ -175,4 +199,4 @@ The final task result must not contain:
 
 ## Next step
 
-Run static CI on the exact final implementation head. If green, run one final Unity Build Automation build against `foundation/authoritative-settings-urp`. Do not replay the capture build.
+Run static CI on the exact assembly-reference-fix head. If green, run a fresh Unity Build Automation build against `foundation/authoritative-settings-urp`. Do not replay build #5.
