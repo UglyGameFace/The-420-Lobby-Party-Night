@@ -126,17 +126,36 @@ Research-backed rules now documented:
 - Web clients remain client-only and require browser-compatible transport;
 - platform validation is independent; a Linux pass never proves Android/Web/iOS.
 
-## Validation plan
+## Validation
+
+Repository preflight completed on hardened pre-bookkeeping head:
+
+`45ab3a4f52a6a89c4e2f33206748200610794e9c`
+
+GitHub static workflow run #23: **PASS**
+
+That run validated:
+- exact Unity/package pins;
+- asset/folder metadata pairings;
+- valid and unique Unity GUIDs;
+- Party Night assembly-definition JSON, names, and internal references;
+- the exact foundation scene path/GUID;
+- exactly one scene entry and one enabled scene;
+- no serialized MonoBehaviour scripts in the minimal foundation scene;
+- rejection of the namespace-import pattern that caused UBA build #2;
+- no Unity-generated directories;
+- no stale/backup/temp artifacts;
+- no conflict markers.
+
+The source gate currently emits a deliberate warning that `Packages/packages-lock.json` has not yet been captured into source control. Unity's documentation states that the lock file preserves deterministic dependency resolution and should be kept in source control. It will be captured from Party Night's pinned editor rather than fabricated manually.
 
 Still required before merge:
-- static validator confirms scene and metadata exist;
-- static validator confirms `EditorBuildSettings.asset` enables exactly the intended foundation scene;
-- Unity imports the scene;
+- this bookkeeping head passes the same GitHub static gate;
+- Unity imports the scene on the exact final head;
 - Party Night scripts compile;
-- Edit Mode regression test confirms the scene asset exists and is enabled;
-- pre-export validator confirms the scene is configured;
-- Linux Player export proceeds beyond the previous "no scenes configured" failure;
-- exact-head GitHub static workflow passes;
+- Edit Mode regression tests pass;
+- pre-export validator passes;
+- Linux Player export succeeds or exposes a new, separately root-caused platform/export failure;
 - final diff and stale-artifact review pass.
 
 ## Cleanup rule
@@ -188,4 +207,4 @@ Do not copy these settings from another game and do not guess opaque serialized 
 
 ## Next step
 
-Run GitHub static CI on the exact hardened head and inspect the full PR diff. Only after that passes should Unity Build Automation be run again on `foundation/first-buildable-scene`.
+Validate this task-record bookkeeping head with GitHub static CI. If it passes and the final PR diff remains clean, Unity Build Automation may be run once more on `foundation/first-buildable-scene` using the existing canonical target.
