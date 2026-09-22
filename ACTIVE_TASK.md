@@ -9,8 +9,9 @@ Outcome:
 - pin the initial required Unity packages;
 - establish a minimal source-controlled Unity project layout;
 - establish Party Night runtime/test assembly boundaries;
-- add static repository validation and a Unity batch-mode validation entrypoint;
-- obtain all validation available without pretending an unavailable Unity Editor run succeeded.
+- add static repository validation and Unity cloud validation hooks;
+- make Unity Build Automation the authoritative phone-only editor/test validation path;
+- enforce cleanup so no superseded, duplicate, temporary, debug, backup, or abandoned implementation remains in the affected area.
 
 ## Scope
 
@@ -23,6 +24,8 @@ Included:
 - minimal Edit Mode smoke test;
 - editor-side foundation validator;
 - GitHub static validation workflow;
+- Unity Build Automation pre-export validation hook;
+- phone-only cloud validation documentation;
 - dependency/license documentation;
 - exact-head PR validation.
 
@@ -41,7 +44,7 @@ Excluded:
 
 **VALIDATION**
 
-Implementation is present on `foundation/unity-project`. Unity Editor execution remains unvalidated until an editor/license-capable runner is available.
+Implementation is present on `foundation/unity-project`. Static CI is green. Unity Build Automation is now the authoritative remaining editor/test validation path for the phone-only workflow.
 
 ## Findings / root cause
 
@@ -72,9 +75,11 @@ Assets/PartyNight runtime assembly
 Assets/PartyNight Edit Mode tests
   -> Unity Test Framework
 Assets/PartyNight Editor validator
-  -> batch-mode package/editor verification
+  -> Unity Build Automation pre-export validation after script compilation
+Assets/PartyNight Edit Mode tests
+  -> Unity Build Automation test gate
 GitHub static workflow
-  -> repository structure/version checks without Unity
+  -> repository structure/version/stale-artifact checks without Unity
 ```
 
 Gameplay execution does not exist yet.
@@ -103,11 +108,14 @@ Implemented on the task branch:
 - created immutable project identity constants for the product name and 12–16 player initial match range;
 - created an Edit Mode smoke test assembly/test;
 - created an Editor-only foundation validator for exact editor/package resolution;
+- exposed `ProjectFoundationValidator.PreExport` for Unity Build Automation;
 - tracked Unity `.meta` files for all new `Assets/` content and folders;
 - added `scripts/validate_unity_foundation.py`;
 - added GitHub static validation workflow;
 - added dependency/license evidence documentation;
 - added Unity setup/validation documentation;
+- added `docs/UNITY_CLOUD_VALIDATION.md` for the phone-only UBA workflow;
+- extended static validation to reject stale/superseded artifact files and directories;
 - updated README foundation status.
 
 No gameplay, scene, prefab, art, model, external service, or other-project code was added.
@@ -133,20 +141,33 @@ Completed after PR creation:
 - static workflow run #2 passed on exact head `1070af75de1003e7ce53c5b3f10182040802a8c0`;
 - PR remained mergeable after the validator fix.
 
+Cloud-path update:
+- Unity Build Automation was selected as the authoritative editor/build validation service because it supports Unity 6000.3 LTS, GitHub-connected builds, pre-export methods, and Edit Mode/Play Mode test gates;
+- GameCI is not the primary path because its current Personal-license setup expects a locally activated Unity license, which conflicts with the phone-only owner workflow;
+- `ProjectFoundationValidator.PreExport` now provides the UBA validation hook after script compilation;
+- local batch-mode validation remains optional and is no longer a project-owner requirement.
+
 Still required:
-- inspect final PR head/diff/status after this task-record update;
-- run Unity 6000.3.24f1 package resolution, script compilation, editor validator, and Edit Mode test on an editor/license-capable runner;
-- review generated `packages-lock.json` and serialized ProjectSettings before merging.
+- inspect final PR head/diff/status after the cloud-path changes;
+- connect this GitHub repository to Unity Build Automation from the Unity Dashboard;
+- run Unity 6000.3.24f1 package resolution, script compilation, the pre-export validator, and Edit Mode tests in UBA;
+- review authoritative resolved package/settings evidence before merging.
 
 A successful static check is not a Unity compile.
 
 ## Cleanup
 
+Hard rule: no superseded, obsolete, duplicate, temporary, debug, backup, compatibility, or abandoned implementation may remain in the affected area when this task closes.
+
+Current cleanup state:
 - no temporary/debug scripts;
 - no generated Unity directories;
 - no fake `packages-lock.json`;
 - no hand-authored scene/prefab/URP asset;
-- no unrelated repository changes.
+- no `.old`, `.bak`, `.orig`, `.rej`, or temporary backup files;
+- no legacy/deprecated/obsolete duplicate directories;
+- no unrelated repository changes;
+- static validation now rejects common stale/superseded artifact patterns.
 
 ## Conflicts
 
@@ -154,11 +175,11 @@ No competing Unity project, runtime assembly, input system owner, network manage
 
 ## Blockers / risks
 
-Current hard validation blocker:
-- this execution environment does not provide a reachable installed/licensed Unity Editor, so authoritative Unity package resolution/compilation/test execution cannot be performed here.
+Current external validation requirement:
+- the GitHub repository must be connected to Unity Build Automation in the user's Unity Dashboard. That account authorization is external to this GitHub connection and cannot be completed by repository code alone.
 
 Additional risks:
-- the first real editor open will generate additional ProjectSettings and `packages-lock.json`; those files must be inspected before merge;
+- the first authoritative cloud editor run may generate additional ProjectSettings and package-resolution output; those results must be inspected before merge;
 - Web transport behavior is not validated by package installation;
 - repository visibility remains public.
 
@@ -192,8 +213,8 @@ Last implementation head before this task-record update: `89e7e2015c94a013a17329
 
 PR: #2, draft.
 
-Merge status: not merged; intentionally blocked on real Unity Editor validation.
+Merge status: not merged; intentionally blocked on Unity Build Automation editor/test validation.
 
 ## Next step
 
-Validate the new exact PR head after this bookkeeping update, then keep PR #2 unmerged until the pinned Unity Editor has generated/resolved the remaining authoritative project files and passed compilation/tests.
+Validate the new exact PR head and static workflow, then keep PR #2 unmerged until Unity Build Automation has resolved the project, compiled scripts, run the pre-export validator, and passed Edit Mode tests.
