@@ -36,7 +36,7 @@ Excluded:
 
 ## Status
 
-**IMPLEMENTATION**
+**VALIDATION**
 
 Working branch:
 `foundation/first-buildable-scene`
@@ -68,9 +68,21 @@ URP package support remains installed, but pipeline assets and URP-specific scen
 
 No temporary runtime scene generator is used. No CI-only fake scene is used.
 
+## Changes
+
+Implemented:
+- added `Assets/PartyNight/Scenes/PartyNightFoundation.unity`;
+- added tracked scene/folder `.meta` files;
+- added `ProjectSettings/EditorBuildSettings.asset` with exactly one enabled scene;
+- extended the Unity pre-export validator to require the imported/enabled scene;
+- added an Edit Mode regression test for scene/build-settings ownership;
+- extended static validation to enforce the exact scene path/GUID and reject multiple enabled foundation scenes.
+
+GitHub static workflow run #14 passed on pre-bookkeeping head `5fc96efd3cccc05dc8bbba8b261eb2f41102b6ed`.
+
 ## Validation plan
 
-Required before merge:
+Still required before merge:
 - static validator confirms scene and metadata exist;
 - static validator confirms `EditorBuildSettings.asset` enables exactly the intended foundation scene;
 - Unity imports the scene;
@@ -108,6 +120,9 @@ Working branch:
 PR:
 #3, draft.
 
+Last pre-bookkeeping statically validated head:
+`5fc96efd3cccc05dc8bbba8b261eb2f41102b6ed`
+
 ## Next step
 
-Wait for the exact-head GitHub static check to pass, then point the existing Unity Build Automation target at `foundation/first-buildable-scene` and run the cloud build.
+Validate this bookkeeping head with GitHub static CI, then point the existing Unity Build Automation target at `foundation/first-buildable-scene` and run the cloud build.
