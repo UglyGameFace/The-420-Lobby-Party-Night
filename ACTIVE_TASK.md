@@ -62,8 +62,9 @@ It is enabled through:
 The scene contains only foundational rendering objects:
 - Main Camera;
 - Audio Listener;
-- Directional Light;
-- URP additional camera/light metadata compatible with the installed URP package.
+- Directional Light.
+
+URP package support remains installed, but pipeline assets and URP-specific scene components are intentionally deferred to their own validated task rather than being guessed into this build-fix.
 
 No temporary runtime scene generator is used. No CI-only fake scene is used.
 
@@ -105,8 +106,8 @@ Working branch:
 `foundation/first-buildable-scene`
 
 PR:
-not opened yet.
+#3, draft.
 
 ## Next step
 
-Commit the real foundation scene and build settings, extend regression validation, then open a draft PR and run Unity Build Automation against this branch.
+Wait for the exact-head GitHub static check to pass, then point the existing Unity Build Automation target at `foundation/first-buildable-scene` and run the cloud build.
