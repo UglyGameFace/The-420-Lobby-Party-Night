@@ -11,6 +11,7 @@ Every pull request must pass repository checks before Unity Build Automation is 
 Required:
 - exact Unity editor pin in `ProjectSettings/ProjectVersion.txt`;
 - exact top-level package pins in `Packages/manifest.json`;
+- source-controlled `Packages/packages-lock.json` once captured from the pinned editor, because Unity uses it to preserve deterministic dependency resolution;
 - valid JSON for package manifests and assembly definitions;
 - unique Unity `.meta` GUIDs;
 - every tracked asset/folder under `Assets/` has matching metadata;
@@ -243,6 +244,7 @@ The required workflow must remain operable from:
 - UBA custom/pre-export scripts: https://docs.unity.com/en-us/build-automation/advanced-build-configuration/run-custom-scripts-during-the-build-process
 - UBA scene selection: https://docs.unity.com/en-us/build-automation/advanced-build-configuration/specify-the-scene-to-be-built
 - Unity clean-build behavior: https://docs.unity.com/en-us/engine/6000.3/script-reference/unityeditor/buildoptions/cleanbuildcache
+- Unity Package Manager lock files: https://docs.unity3d.com/6000.0/Documentation/Manual/upm-conflicts-auto.html
 - URP asset creation: https://docs.unity3d.com/6000.0/Documentation/Manual/urp/urp-asset-create.html
 - Active render pipeline behavior: https://docs.unity3d.com/6000.1/Documentation/Manual/srp-setting-render-pipeline-asset.html
 - Unity Transport overview/WebSocket constraint: https://docs-multiplayer.unity3d.com/transport/current/about/
