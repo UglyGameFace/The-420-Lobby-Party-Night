@@ -138,6 +138,33 @@ def validate_build_scene() -> None:
     if settings_text.count("  - enabled: 1") != 1:
         fail("exactly one build scene must be enabled during the foundation scene task")
 
+    scene_paths = [
+        line.strip()
+        for line in settings_text.splitlines()
+        if line.strip().startswith("path: Assets/")
+    ]
+    if scene_paths != [f"path: {EXPECTED_BUILD_SCENE}"]:
+        fail("EditorBuildSettings must contain only the intended foundation scene")
+
+    if "m_Script:" in scene_text:
+        fail("foundation scene must not contain serialized MonoBehaviour script references yet")
+
+
+def validate_csharp_namespace_hygiene() -> None:
+    party_night_assets = ROOT / "Assets" / "PartyNight"
+    forbidden_imports = {
+        "using UnityEditor.PackageManager;": (
+            "broad UnityEditor.PackageManager import can collide with UnityEditor types; "
+            "alias or fully qualify the required Package Manager type instead"
+        ),
+    }
+
+    for path in sorted(party_night_assets.rglob("*.cs")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for forbidden, reason in forbidden_imports.items():
+            if forbidden in text:
+                fail(f"{path.relative_to(ROOT)}: {reason}")
+
 
 def validate_generated_directories_absent() -> None:
     present = sorted(name for name in FORBIDDEN_ROOT_DIRS if (ROOT / name).exists())
@@ -173,6 +200,7 @@ def main() -> None:
     validate_manifest()
     validate_assets_metadata()
     validate_build_scene()
+    validate_csharp_namespace_hygiene()
     validate_generated_directories_absent()
     validate_no_stale_artifacts()
     validate_conflict_markers()
