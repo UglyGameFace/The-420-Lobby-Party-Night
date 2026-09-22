@@ -164,13 +164,13 @@ namespace PartyNight.Foundation.Editor
             {
                 for (var index = 0; index < QualitySettings.names.Length; index++)
                 {
-                    QualitySettings.SetQualityLevel(index, applyExpensiveChanges: false);
+                    QualitySettings.SetQualityLevel(index, false);
                     QualitySettings.renderPipeline = null;
                 }
             }
             finally
             {
-                QualitySettings.SetQualityLevel(originalQualityLevel, applyExpensiveChanges: false);
+                QualitySettings.SetQualityLevel(originalQualityLevel, false);
             }
         }
 
@@ -216,7 +216,7 @@ namespace PartyNight.Foundation.Editor
             {
                 for (var index = 0; index < QualitySettings.names.Length; index++)
                 {
-                    QualitySettings.SetQualityLevel(index, applyExpensiveChanges: false);
+                    QualitySettings.SetQualityLevel(index, false);
                     if (QualitySettings.renderPipeline != null)
                     {
                         throw new InvalidOperationException(
@@ -226,7 +226,7 @@ namespace PartyNight.Foundation.Editor
             }
             finally
             {
-                QualitySettings.SetQualityLevel(originalQualityLevel, applyExpensiveChanges: false);
+                QualitySettings.SetQualityLevel(originalQualityLevel, false);
             }
 
             if (!string.Equals(PlayerSettings.productName, ProjectIdentity.ProductName, StringComparison.Ordinal))
