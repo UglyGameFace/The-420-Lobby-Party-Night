@@ -8,6 +8,8 @@ namespace PartyNight.Gameplay
         public const string RuntimeName = "Hotbox Havoc Local Prototype";
         public const string VisualCaptureRelativePath =
             "VisualValidation/HotboxHavoc_Overview.png";
+        public const string VisualCaptureManifestRelativePath =
+            "VisualValidation/HotboxHavoc_Overview.json";
 
         private HotboxHavocRoundController roundController;
         private HotboxHavocPrototypeVisuals visuals;

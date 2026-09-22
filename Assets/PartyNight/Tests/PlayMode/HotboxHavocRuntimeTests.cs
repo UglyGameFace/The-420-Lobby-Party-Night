@@ -211,7 +211,20 @@ namespace PartyNight.Gameplay.Tests
                 Directory.CreateDirectory(directory);
                 File.WriteAllBytes(capturePath, png);
 
+                var revision =
+                    System.Environment.GetEnvironmentVariable("BUILD_REVISION") ??
+                    "local";
+                var manifestPath = Path.Combine(
+                    projectRoot,
+                    HotboxHavocPrototype.VisualCaptureManifestRelativePath);
+                File.WriteAllText(
+                    manifestPath,
+                    "{\"revision\":\"" + revision +
+                    "\",\"unityVersion\":\"" + Application.unityVersion +
+                    "\",\"width\":1280,\"height\":720}");
+
                 Assert.That(File.Exists(capturePath), Is.True);
+                Assert.That(File.Exists(manifestPath), Is.True);
                 Assert.That(
                     new FileInfo(capturePath).Length,
                     Is.EqualTo(png.LongLength));

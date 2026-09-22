@@ -569,6 +569,8 @@ def validate_hotbox_havoc_prototype() -> None:
     )
     if "VisualValidation/HotboxHavoc_Overview.png" not in prototype:
         fail("Hotbox Havoc prototype visual artifact path changed unexpectedly")
+    if "VisualValidation/HotboxHavoc_Overview.json" not in prototype:
+        fail("Hotbox Havoc exact-revision manifest path changed unexpectedly")
 
     composition = read_required(
         "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs"
@@ -624,6 +626,18 @@ def validate_hotbox_havoc_prototype() -> None:
         fail("visual artifact exporter must enforce capture presence on Unity Cloud")
     if "BuildFailedException" not in exporter:
         fail("Unity Cloud visual artifact exporter must fail when evidence is missing")
+    if "BUILD_REVISION" not in exporter:
+        fail("visual artifact exporter must bind evidence to BUILD_REVISION")
+    if "ValidateCurrentCloudCapture" not in exporter:
+        fail("visual artifact exporter must validate evidence before Player export")
+    if "HotboxHavoc_Overview.json" not in exporter:
+        fail("visual artifact exporter must copy exact-revision evidence manifest")
+
+    project_validator = read_required(
+        "Assets/PartyNight/Editor/ProjectFoundationValidator.cs"
+    )
+    if "HotboxHavocVisualArtifactExporter.ValidateCurrentCloudCapture();" not in project_validator:
+        fail("pre-export must validate exact-revision Hotbox visual evidence")
 
     gitignore = read_required(".gitignore")
     if "/VisualValidation/" not in gitignore:
