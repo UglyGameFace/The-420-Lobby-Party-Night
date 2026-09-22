@@ -45,7 +45,7 @@ Native controller support remains a hard requirement for the later input task ac
 
 ## Status
 
-**IMPLEMENTATION — CAPTURE STAGE**
+**VALIDATION — CAPTURE PASS COMPLETE**
 
 Repository:
 `UglyGameFace/The-420-Lobby-Party-Night`
@@ -144,6 +144,35 @@ The final task result must not retain:
 - disabled superseded settings;
 - generated Unity working directories.
 
+## Capture build evidence
+
+Unity Build Automation build #4 ran on exact capture head:
+
+`9f6ade2d800547ebdea16e4cdaa3e4119efd8e1c`
+
+Validated:
+- correct branch `foundation/authoritative-settings-urp` checked out;
+- exact commit matched the capture head;
+- Unity `6000.3.24f1 (4e7b9b5b6244)` launched;
+- package resolution succeeded;
+- Unity created `Packages/packages-lock.json`;
+- Edit Mode tests completed with exit code 0;
+- pre-export bootstrap generated/imported Party Night URP assets;
+- Party Night foundation validator passed;
+- Linux Player build completed with `Result: Success`;
+- Player export finished successfully;
+- post-build capture reported 16 authoritative Unity settings files copied into `PartyNightAuthoritativeSettings`;
+- UBA build #4 ended with `Finished: SUCCESS`.
+
+Observed non-fatal Unity note:
+- Unity reported that the default volume profile was modified to ensure all required overrides exist and should be saved. The captured artifact must be inspected to determine the exact generated/saved volume-profile state before anything is committed.
+
+## Current blocker
+
+The build log proves generation and capture succeeded, but it does not contain the exact bytes of the generated Unity files.
+
+The downloadable UBA build artifact ZIP is required before the capture stage can close. The exact `PartyNightAuthoritativeSettings/` contents and `SHA256SUMS.txt` must be inspected and committed from that artifact. No settings file will be reconstructed from log output.
+
 ## Next step
 
-Implement the temporary Unity editor bootstrap + artifact capture path, harden static validation around it, open a draft PR, and run the first UBA capture build.
+Obtain the Unity Build Automation build #4 artifact ZIP, inspect and verify the captured files/checksums, commit the authoritative generated files, remove the temporary bootstrap/capture implementation, switch validators to committed-state validation, and run the final exact-head UBA build.
