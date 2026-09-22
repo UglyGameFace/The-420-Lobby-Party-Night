@@ -22,6 +22,7 @@ namespace PartyNight.Foundation.Editor
 
         public static void PreExport()
         {
+            AuthoritativeSettingsBootstrap.Prepare();
             Validate();
         }
 
