@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor;
-using UnityEditor.PackageManager;
+using PackageManagerPackageInfo = UnityEditor.PackageManager.PackageInfo;
 using UnityEngine;
 
 namespace PartyNight.Foundation.Editor
@@ -35,7 +34,7 @@ namespace PartyNight.Foundation.Editor
             }
 
             var installed = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var package in PackageInfo.GetAllRegisteredPackages())
+            foreach (var package in PackageManagerPackageInfo.GetAllRegisteredPackages())
             {
                 installed[package.name] = package.version;
             }
@@ -54,14 +53,14 @@ namespace PartyNight.Foundation.Editor
                 }
             }
 
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(RequiredBuildScene) == null)
+            if (UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEditor.SceneAsset>(RequiredBuildScene) == null)
             {
                 throw new InvalidOperationException($"Required build scene {RequiredBuildScene} could not be imported.");
             }
 
             var enabledSceneCount = 0;
             var requiredSceneEnabled = false;
-            foreach (var scene in EditorBuildSettings.scenes)
+            foreach (var scene in UnityEditor.EditorBuildSettings.scenes)
             {
                 if (!scene.enabled)
                 {
