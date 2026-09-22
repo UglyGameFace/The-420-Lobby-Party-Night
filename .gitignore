@@ -1,0 +1,68 @@
+# Unity generated folders
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Asset Store tooling
+/[Aa]ssets/AssetStoreTools*
+
+# IDE / editor
+.vscode/
+.idea/
+.vs/
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Rider
+.idea/
+*.sln.iml
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Crash/debug output
+sysinfo.txt
+crashlytics-build.properties
+
+# Builds and packages
+*.apk
+*.aab
+*.app
+*.ipa
+*.unitypackage
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+secrets/
+Secrets/
+
+# Local server/runtime data
+.runtime/
+.local/
