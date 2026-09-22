@@ -66,3 +66,6 @@ Secrets/
 # Local server/runtime data
 .runtime/
 .local/
+
+# Generated visual-validation captures
+/VisualValidation/

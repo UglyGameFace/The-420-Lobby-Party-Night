@@ -37,6 +37,7 @@ namespace PartyNight.Foundation.Editor
             Validate();
             InputFoundationValidator.Validate();
             GameplayFoundationValidator.Validate();
+            HotboxHavocPrototypeValidator.Validate();
         }
 
         public static void Validate()

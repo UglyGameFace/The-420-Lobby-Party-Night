@@ -16,12 +16,14 @@ namespace PartyNight.Gameplay
         private GameObject localPlayer;
         private PartyNightOrbitCamera orbitCamera;
         private PartyNightLocalPlayerController localController;
+        private HotboxHavocPrototype hotboxPrototype;
 
         public bool IsComposed => runtimeRoot != null;
         public GameObject Ground => ground;
         public GameObject LocalPlayer => localPlayer;
         public PartyNightOrbitCamera OrbitCamera => orbitCamera;
         public PartyNightLocalPlayerController LocalController => localController;
+        public HotboxHavocPrototype HotboxPrototype => hotboxPrototype;
 
         private void Awake()
         {
@@ -47,6 +49,7 @@ namespace PartyNight.Gameplay
             GameObject newLocalPlayer = null;
             PartyNightOrbitCamera newOrbitCamera = null;
             PartyNightLocalPlayerController newLocalController = null;
+            HotboxHavocPrototype newHotboxPrototype = null;
 
             try
             {
@@ -90,6 +93,13 @@ namespace PartyNight.Gameplay
                     newLocalPlayer.AddComponent<PartyNightLocalPlayerController>();
                 newLocalController.Initialize(motor, newOrbitCamera);
 
+                newHotboxPrototype =
+                    newRuntimeRoot.AddComponent<HotboxHavocPrototype>();
+                newHotboxPrototype.Initialize(
+                    newLocalPlayer.transform,
+                    motor,
+                    newOrbitCamera);
+
                 Physics.SyncTransforms();
 
                 runtimeRoot = newRuntimeRoot.transform;
@@ -97,6 +107,7 @@ namespace PartyNight.Gameplay
                 localPlayer = newLocalPlayer;
                 orbitCamera = newOrbitCamera;
                 localController = newLocalController;
+                hotboxPrototype = newHotboxPrototype;
             }
             catch
             {

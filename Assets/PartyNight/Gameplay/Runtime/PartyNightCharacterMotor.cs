@@ -46,6 +46,12 @@ namespace PartyNight.Gameplay
             }
         }
 
+        public void ResetMotion()
+        {
+            horizontalVelocity = Vector3.zero;
+            verticalVelocity = GroundedVerticalSpeed;
+        }
+
         public void Tick(Vector3 desiredWorldMove, bool jumpPressed, float deltaTime)
         {
             if (characterController == null)
