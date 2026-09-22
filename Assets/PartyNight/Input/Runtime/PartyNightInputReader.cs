@@ -16,13 +16,31 @@ namespace PartyNight.Input
         private readonly InputAction dash;
         private readonly InputAction useItem;
         private readonly InputAction emote;
+        private readonly bool ownsActionAsset;
+        private readonly bool manageActionMapState;
         private bool disposed;
 
         public PartyNightInputReader(InputActionAsset source)
+            : this(source, cloneSource: true, manageActionMapState: true)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
+        }
 
-            actions = UnityEngine.Object.Instantiate(source);
+        private PartyNightInputReader(
+            InputActionAsset source,
+            bool cloneSource,
+            bool manageActionMapState)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            ownsActionAsset = cloneSource;
+            this.manageActionMapState = manageActionMapState;
+            actions = cloneSource
+                ? UnityEngine.Object.Instantiate(source)
+                : source;
+
             gameplay = actions.FindActionMap(PartyNightInputNames.GameplayMap, true);
             move = gameplay.FindAction(PartyNightInputNames.Move, true);
             look = gameplay.FindAction(PartyNightInputNames.Look, true);
@@ -36,23 +54,53 @@ namespace PartyNight.Input
 
         public bool Enabled => !disposed && gameplay.enabled;
 
+        public static PartyNightInputReader CreateFromProjectWideActions()
+        {
+            var source = InputSystem.actions;
+            if (source == null)
+            {
+                throw new InvalidOperationException(
+                    "Party Night project-wide Input Actions are not assigned.");
+            }
+
+            // Project-wide actions are already the single preloaded runtime asset.
+            // Borrow it instead of cloning a second always-on action graph.
+            return new PartyNightInputReader(
+                source,
+                cloneSource: false,
+                manageActionMapState: false);
+        }
+
         public void Enable()
         {
             ThrowIfDisposed();
-            gameplay.Enable();
+            if (!gameplay.enabled)
+            {
+                gameplay.Enable();
+            }
         }
 
         public void Disable()
         {
-            if (!disposed) gameplay.Disable();
+            if (!disposed && manageActionMapState)
+            {
+                gameplay.Disable();
+            }
         }
 
         public PartyNightInputFrame ReadFrame()
         {
             ThrowIfDisposed();
+
+            var lookValue = look.ReadValue<Vector2>();
+            var lookMode = look.activeControl?.device is Pointer
+                ? PartyNightLookInputMode.Delta
+                : PartyNightLookInputMode.Rate;
+
             return new PartyNightInputFrame(
                 move.ReadValue<Vector2>(),
-                look.ReadValue<Vector2>(),
+                lookValue,
+                lookMode,
                 jump.WasPressedThisFrame(),
                 interact.WasPressedThisFrame(),
                 grab.WasPressedThisFrame(),
@@ -63,9 +111,23 @@ namespace PartyNight.Input
 
         public void Dispose()
         {
-            if (disposed) return;
-            gameplay.Disable();
+            if (disposed)
+            {
+                return;
+            }
+
+            if (manageActionMapState)
+            {
+                gameplay.Disable();
+            }
+
             disposed = true;
+
+            if (!ownsActionAsset)
+            {
+                return;
+            }
+
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
@@ -78,7 +140,10 @@ namespace PartyNight.Input
 
         private void ThrowIfDisposed()
         {
-            if (disposed) throw new ObjectDisposedException(nameof(PartyNightInputReader));
+            if (disposed)
+            {
+                throw new ObjectDisposedException(nameof(PartyNightInputReader));
+            }
         }
     }
 }

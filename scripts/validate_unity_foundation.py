@@ -20,6 +20,8 @@ EXPECTED_VOLUME_PROFILE_ASSET = "Assets/PartyNight/Settings/PartyNightDefaultVol
 EXPECTED_VOLUME_PROFILE_GUID = "c55b34362de09465f8a9b944f73c290e"
 EXPECTED_SETTINGS_FOLDER_GUID = "6235a995f08434dfc81e53495c5c2027"
 EXPECTED_INPUT_ACTION_ASSET = "Assets/PartyNight/Input/PartyNightInputActions.inputactions"
+EXPECTED_INPUT_ACTION_GUID = "ad5fffad5d744af6939605235845fa84"
+EXPECTED_FOUNDATION_COMPOSITION_GUID = "f5beee5f4dbc4d43870a8db089e7f00f"
 EXPECTED_INPUT_ACTIONS = {
     "Move": ("Value", "Vector2"),
     "Look": ("Value", "Vector2"),
@@ -411,8 +413,17 @@ def validate_input_foundation() -> None:
     if scheme_devices.get("Gamepad") != ["<Gamepad>"]:
         fail("Gamepad scheme must require the generic Gamepad layout")
 
+    build_settings = read_required("ProjectSettings/EditorBuildSettings.asset")
+    expected_project_wide_actions = (
+        "com.unity.input.settings.actions: "
+        "{fileID: -944628639613478452, "
+        "guid: " + EXPECTED_INPUT_ACTION_GUID + ", type: 3}"
+    )
+    if expected_project_wide_actions not in build_settings:
+        fail("Project-wide Input Actions must be assigned in EditorBuildSettings")
+
     input_meta = read_required(EXPECTED_INPUT_ACTION_ASSET + ".meta")
-    if "guid: ad5fffad5d744af6939605235845fa84" not in input_meta:
+    if f"guid: {EXPECTED_INPUT_ACTION_GUID}" not in input_meta:
         fail("input actions asset GUID changed unexpectedly")
     if "guid: 8404be70184654265930450def6a9037" not in input_meta:
         fail("input actions asset is not using Unity Input System's InputAction importer")
@@ -438,6 +449,91 @@ def validate_input_foundation() -> None:
             fail(f"EditMode tests missing input reference {required}")
 
 
+def validate_gameplay_foundation() -> None:
+    gameplay_asm_path = (
+        "Assets/PartyNight/Gameplay/Runtime/PartyNight.Gameplay.asmdef"
+    )
+    gameplay_asm = json.loads(read_required(gameplay_asm_path))
+    if gameplay_asm.get("references") != ["PartyNight.Input"]:
+        fail("PartyNight.Gameplay must depend on PartyNight.Input only")
+    if "ENABLE_INPUT_SYSTEM" not in gameplay_asm.get("defineConstraints", []):
+        fail("PartyNight.Gameplay must require ENABLE_INPUT_SYSTEM")
+
+    required_runtime_files = (
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightCharacterMotor.cs",
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightOrbitCamera.cs",
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightLocalPlayerController.cs",
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs",
+    )
+    for relative in required_runtime_files:
+        read_required(relative)
+
+    motor = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightCharacterMotor.cs"
+    )
+    if "CharacterController" not in motor:
+        fail("Party Night movement motor must use CharacterController")
+    if "Rigidbody" in motor:
+        fail("Party Night movement motor must not introduce a parallel Rigidbody controller")
+
+    for relative in required_runtime_files:
+        text = read_required(relative)
+        if "UnityEngine.InputSystem" in text:
+            fail(
+                f"{relative} bypasses the PartyNight.Input abstraction with direct Input System access"
+            )
+        for physical_path in ("<Keyboard>", "<Mouse>", "<Gamepad>", "<Touchscreen>"):
+            if physical_path in text:
+                fail(
+                    f"{relative} hardcodes physical input path {physical_path}"
+                )
+
+    editor_asm = json.loads(
+        read_required("Assets/PartyNight/Editor/PartyNight.Foundation.Editor.asmdef")
+    )
+    if "PartyNight.Gameplay" not in editor_asm.get("references", []):
+        fail("PartyNight.Foundation.Editor must reference PartyNight.Gameplay")
+
+    playmode_asm_path = (
+        "Assets/PartyNight/Tests/PlayMode/PartyNight.Gameplay.PlayModeTests.asmdef"
+    )
+    playmode_asm = json.loads(read_required(playmode_asm_path))
+    playmode_refs = set(playmode_asm.get("references", []))
+    required_playmode_refs = {
+        "PartyNight.Gameplay",
+        "PartyNight.Input",
+        "Unity.InputSystem",
+    }
+    if not required_playmode_refs.issubset(playmode_refs):
+        fail("PlayMode tests are missing required gameplay/input references")
+    if playmode_asm.get("includePlatforms") != []:
+        fail("PlayMode test assembly must not be Editor-only")
+
+    composition_meta = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs.meta"
+    )
+    if f"guid: {EXPECTED_FOUNDATION_COMPOSITION_GUID}" not in composition_meta:
+        fail("FoundationSceneComposition script GUID changed unexpectedly")
+
+    input_frame = read_required(
+        "Assets/PartyNight/Input/Runtime/PartyNightInputFrame.cs"
+    )
+    if "PartyNightLookInputMode LookMode" not in input_frame:
+        fail("PartyNightInputFrame must preserve pointer-delta vs look-rate semantics")
+
+    input_reader = read_required(
+        "Assets/PartyNight/Input/Runtime/PartyNightInputReader.cs"
+    )
+    if "CreateFromProjectWideActions" not in input_reader:
+        fail("PartyNightInputReader must consume the assigned project-wide actions")
+    if "cloneSource: false" not in input_reader:
+        fail("PartyNightInputReader must borrow the project-wide Action Asset without cloning it")
+    if "manageActionMapState: false" not in input_reader:
+        fail("project-wide input reader must not disable or destroy the shared Action Asset")
+    if "device is Pointer" not in input_reader:
+        fail("PartyNightInputReader must classify pointer delta look separately")
+
+
 def validate_capture_cleanup() -> None:
     forbidden = (
         "Assets/PartyNight/Editor/AuthoritativeSettingsBootstrap.cs",
@@ -458,7 +554,12 @@ def validate_build_scene() -> None:
         fail(f"missing build scene: {EXPECTED_BUILD_SCENE}")
 
     scene_text = scene.read_text(encoding="utf-8")
-    for required_name in ("m_Name: Main Camera", "m_Name: Directional Light", "SceneRoots:"):
+    for required_name in (
+        "m_Name: Main Camera",
+        "m_Name: Directional Light",
+        "m_Name: Foundation Scene Composition",
+        "SceneRoots:",
+    ):
         if required_name not in scene_text:
             fail(f"build scene is missing required serialized content: {required_name}")
 
@@ -492,8 +593,14 @@ def validate_build_scene() -> None:
     if scene_paths != [f"path: {EXPECTED_BUILD_SCENE}"]:
         fail("EditorBuildSettings must contain only the intended foundation scene")
 
-    if "m_Script:" in scene_text:
-        fail("foundation scene must not contain serialized MonoBehaviour script references yet")
+    expected_script = (
+        "m_Script: {fileID: 11500000, "
+        "guid: " + EXPECTED_FOUNDATION_COMPOSITION_GUID + ", type: 3}"
+    )
+    if scene_text.count("m_Script:") != 1:
+        fail("foundation scene must contain exactly one serialized MonoBehaviour")
+    if expected_script not in scene_text:
+        fail("foundation scene does not reference FoundationSceneComposition")
 
 def validate_csharp_namespace_hygiene() -> None:
     party_night_assets = ROOT / "Assets" / "PartyNight"
@@ -546,6 +653,7 @@ def main() -> None:
     validate_authoritative_project_settings()
     validate_render_pipeline_assembly_references()
     validate_input_foundation()
+    validate_gameplay_foundation()
     validate_capture_cleanup()
     validate_build_scene()
     validate_csharp_namespace_hygiene()

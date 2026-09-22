@@ -36,6 +36,7 @@ namespace PartyNight.Foundation.Editor
         {
             Validate();
             InputFoundationValidator.Validate();
+            GameplayFoundationValidator.Validate();
         }
 
         public static void Validate()

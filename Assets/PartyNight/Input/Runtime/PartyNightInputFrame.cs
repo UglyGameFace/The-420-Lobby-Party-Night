@@ -4,11 +4,20 @@ namespace PartyNight.Input
 {
     public readonly struct PartyNightInputFrame
     {
-        public PartyNightInputFrame(Vector2 move, Vector2 look, bool jumpPressed, bool interactPressed,
-            bool grabPressed, bool dashPressed, bool useItemPressed, bool emotePressed)
+        public PartyNightInputFrame(
+            Vector2 move,
+            Vector2 look,
+            PartyNightLookInputMode lookMode,
+            bool jumpPressed,
+            bool interactPressed,
+            bool grabPressed,
+            bool dashPressed,
+            bool useItemPressed,
+            bool emotePressed)
         {
             Move = move;
             Look = look;
+            LookMode = lookMode;
             JumpPressed = jumpPressed;
             InteractPressed = interactPressed;
             GrabPressed = grabPressed;
@@ -19,6 +28,7 @@ namespace PartyNight.Input
 
         public Vector2 Move { get; }
         public Vector2 Look { get; }
+        public PartyNightLookInputMode LookMode { get; }
         public bool JumpPressed { get; }
         public bool InteractPressed { get; }
         public bool GrabPressed { get; }

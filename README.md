@@ -77,4 +77,4 @@ Repository bootstrap, the shared Unity project foundation, and the first real bu
 
 No Hotbox Havoc gameplay implementation has been validated yet.
 
-The authoritative Unity project settings, deterministic package lock, and URP activation are complete. The current focused task is the cross-platform Input Action foundation for keyboard/mouse, native gamepads, and mobile on-screen controls.
+The authoritative Unity project settings, deterministic package lock, URP activation, and cross-platform Input Action foundation are complete. The current focused task is the first local player movement + third-person camera runtime foundation with Play Mode validation.

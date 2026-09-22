@@ -17,5 +17,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Compile static validator
+        run: python3 -m py_compile scripts/validate_unity_foundation.py
+
       - name: Validate Unity foundation
         run: python3 scripts/validate_unity_foundation.py

@@ -42,6 +42,16 @@ namespace PartyNight.Foundation.Editor
 #endif
             var asset = AssetDatabase.LoadAssetAtPath<InputActionAsset>(PartyNightInputNames.AssetPath);
             if (asset == null) throw new InvalidOperationException($"InputActionAsset could not be imported: {PartyNightInputNames.AssetPath}");
+
+            var projectWideActions = InputSystem.actions;
+            if (projectWideActions == null)
+                throw new InvalidOperationException("Party Night Project-wide Input Actions are not assigned.");
+            if (!string.Equals(
+                    AssetDatabase.GetAssetPath(projectWideActions),
+                    PartyNightInputNames.AssetPath,
+                    StringComparison.Ordinal))
+                throw new InvalidOperationException(
+                    $"Project-wide Input Actions must be {PartyNightInputNames.AssetPath}.");
             if (asset.actionMaps.Count != 1) throw new InvalidOperationException($"Expected exactly one Party Night action map, found {asset.actionMaps.Count}.");
 
             var gameplay = asset.FindActionMap(PartyNightInputNames.GameplayMap, true);
