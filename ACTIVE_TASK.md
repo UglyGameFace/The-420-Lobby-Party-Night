@@ -23,7 +23,7 @@ Included:
 - cross-platform constraints;
 - authoritative multiplayer boundaries;
 - active-task tracking;
-- source-control validation of this bootstrap branch.
+- source-control/PR validation.
 
 Excluded:
 - Hotbox Havoc gameplay code;
@@ -37,11 +37,11 @@ Excluded:
 
 ## Status
 
-**IMPLEMENTATION / VALIDATION**
+**VALIDATION**
 
-Repository bootstrap files are being established on `bootstrap/project-foundation`.
+Bootstrap implementation is present on `bootstrap/project-foundation` and PR #1 is open.
 
-No Unity gameplay or runtime code exists yet. No Unity build has been claimed or validated.
+No Unity gameplay/runtime code exists yet. No Unity build has been claimed or validated.
 
 ## Findings / root cause
 
@@ -51,14 +51,14 @@ Repository inspection on 2026-09-21 confirmed:
 - repository: `UglyGameFace/The-420-Lobby-Party-Night`;
 - repository was empty when bootstrap began;
 - no pre-existing branches, files, Unity project, packages, tests, scenes, prefabs, or build settings existed;
-- the repository is currently reported by GitHub as public;
-- no unrelated user work existed to preserve inside this repository.
+- GitHub reports the repository as public;
+- no unrelated user work existed inside this repository.
 
 Technology research confirmed:
 - Unity 6.3 is the current LTS family and is supported through December 2027;
 - Unity supports dedicated-server build profiles;
 - Unity Web cannot rely on ordinary direct IP socket access and requires browser-compatible networking such as WebSockets/WebRTC or supported Unity web networking;
-- therefore browser networking must remain a design constraint before a transport is locked into production.
+- browser networking is therefore a first-order constraint before production transport is locked.
 
 ## Execution path
 
@@ -87,7 +87,7 @@ Current baseline decisions:
 - Input direction: Unity Input System with abstract gameplay actions.
 - Multiplayer model: authoritative dedicated server.
 - Initial high-level networking candidate: Netcode for GameObjects with Unity Transport.
-- Web transport compatibility must be proven before networking adoption is considered final.
+- Web transport compatibility must be proven before networking adoption is final.
 - Client, game server, persistent services, and Discord integration have separate ownership.
 - Initial multiplayer target: 12–16 players per Hotbox Havoc match.
 - Closed-console platforms are out of scope.
@@ -100,33 +100,39 @@ Not yet locked:
 - persistence technology;
 - authentication/account-linking implementation.
 
-Those choices require validation in their own active task rather than being smuggled into this one.
-
 ## Changes
 
-- Seeded the repository with a project README on `main`.
-- Created focused branch `bootstrap/project-foundation`.
+- Seeded `main` with the isolated Party Night README.
+- Created `bootstrap/project-foundation`.
 - Added Unity repository hygiene.
 - Added this active-task record.
 - Added architecture and platform documentation.
+- Added a validation-focused pull-request template.
+- Opened draft PR #1 for the bootstrap diff.
 
 ## Validation
 
-Completed:
+Completed before this bookkeeping update:
 - GitHub repository identity verified.
 - Empty initial state verified before edits.
 - Bootstrap branch created from the initial `main` seed.
 - Current Unity LTS/support information checked against Unity documentation.
 - Dedicated-server capability checked against Unity documentation.
 - Web networking constraints checked against Unity documentation.
+- Branch diff inspected against `main`.
+- Diff contained only the five expected added text files.
+- Branch was 5 commits ahead and 0 behind `main`.
+- No generated Unity folders, binary assets, secrets, or unrelated project files appeared in that diff.
+- PR #1 opened against `main`.
+- Pre-bookkeeping PR head verified as `8a7a0d47e6771c0bfc7f22c2b3aa3394a64e9aa5`.
 
-Still required before this task can be marked complete:
-- inspect final branch file list;
-- inspect final branch diff against `main`;
-- verify no secret-bearing/generated/binary junk was introduced;
-- verify final branch head exactly;
-- open a focused PR;
-- inspect PR diff/state on its exact head.
+Required after this bookkeeping update:
+- verify the new exact PR head;
+- inspect PR patch/file list on that exact head;
+- inspect available CI/status checks;
+- mark PR ready only if validation remains clean;
+- merge with expected-head protection;
+- verify merged `main`.
 
 Not applicable yet:
 - Unity compilation;
@@ -134,7 +140,7 @@ Not applicable yet:
 - desktop/mobile/Web builds;
 - multiplayer runtime tests.
 
-There is no Unity project to run, so claiming those checks would be fiction wearing a lab coat.
+Those checks require an actual Unity project and belong to the next active task.
 
 ## Cleanup
 
@@ -148,14 +154,14 @@ No Unity-generated folders are tracked.
 
 No duplicate runtime ownership exists because runtime systems have not been implemented.
 
-Architecture explicitly reserves one authoritative owner for match state: the dedicated game server.
+Architecture reserves authoritative match ownership for the dedicated game server.
 
 ## Blockers / risks
 
 - Exact Unity 6000.3 patch remains intentionally unpinned until the real Unity project is created and package resolution can be validated together.
-- Web networking is a hard compatibility constraint; transport adoption is provisional until a Web client can connect to the dedicated-server path.
-- The repository is currently public. No secrets may ever be committed, regardless of future visibility changes.
-- No Unity Editor/runtime validation is possible until the project files exist.
+- Web networking is a hard compatibility constraint; transport adoption remains provisional until a Web client can connect to the dedicated-server path.
+- The repository is currently public. No secrets may be committed regardless of future visibility changes.
+- Unity Editor/runtime validation cannot occur until project files exist.
 
 ## Backlog
 
@@ -186,12 +192,14 @@ Base seed commit: `2935d4f352650d731262c24a69e84cb7136d88bf`
 
 Working branch: `bootstrap/project-foundation`
 
-Head SHA: update after final bootstrap commit.
+Last exact pre-bookkeeping head: `8a7a0d47e6771c0bfc7f22c2b3aa3394a64e9aa5`
 
-PR: not yet opened.
+Current exact head: verified from PR metadata after this file update. It cannot be embedded in the commit that defines that same SHA without creating a self-referential hash.
 
-Merge status: not applicable.
+PR: #1, draft during exact-head validation.
+
+Merge status: not merged.
 
 ## Next step
 
-Finish the bootstrap files, inspect the exact branch diff/head, then open and validate the focused repository-foundation PR.
+Validate PR #1 on its new exact head, then mark ready and merge only if the final patch/status checks remain clean.
