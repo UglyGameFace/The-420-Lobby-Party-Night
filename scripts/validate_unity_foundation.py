@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -106,6 +107,73 @@ def validate_assets_metadata() -> None:
             fail(f"missing asset metadata: {meta.relative_to(ROOT)}")
 
 
+def validate_meta_guids() -> None:
+    seen = {}
+    guid_pattern = re.compile(r"^[0-9a-f]{32}$")
+
+    for meta in sorted((ROOT / "Assets").rglob("*.meta")):
+        guid_lines = [
+            line.split(":", 1)[1].strip()
+            for line in meta.read_text(encoding="utf-8", errors="replace").splitlines()
+            if line.startswith("guid:")
+        ]
+        if len(guid_lines) != 1:
+            fail(f"{meta.relative_to(ROOT)} must contain exactly one top-level guid")
+
+        guid = guid_lines[0]
+        if not guid_pattern.fullmatch(guid):
+            fail(f"{meta.relative_to(ROOT)} has invalid Unity GUID {guid!r}")
+
+        previous = seen.get(guid)
+        if previous is not None:
+            fail(
+                f"duplicate Unity GUID {guid} in {previous} and {meta.relative_to(ROOT)}"
+            )
+        seen[guid] = meta.relative_to(ROOT)
+
+
+def validate_assembly_definitions() -> None:
+    asmdefs = {}
+    parsed = []
+
+    for path in sorted((ROOT / "Assets" / "PartyNight").rglob("*.asmdef")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            fail(f"invalid asmdef JSON in {path.relative_to(ROOT)}: {exc}")
+
+        name = data.get("name")
+        if not isinstance(name, str) or not name:
+            fail(f"{path.relative_to(ROOT)} has no valid assembly name")
+        if name in asmdefs:
+            fail(
+                f"duplicate assembly name {name!r}: "
+                f"{asmdefs[name]} and {path.relative_to(ROOT)}"
+            )
+
+        asmdefs[name] = path.relative_to(ROOT)
+        parsed.append((path, data))
+
+    if not parsed:
+        fail("no Party Night assembly definitions found")
+
+    for path, data in parsed:
+        references = data.get("references", [])
+        if not isinstance(references, list):
+            fail(f"{path.relative_to(ROOT)} references must be a list")
+
+        for reference in references:
+            if (
+                isinstance(reference, str)
+                and reference.startswith("PartyNight.")
+                and reference not in asmdefs
+            ):
+                fail(
+                    f"{path.relative_to(ROOT)} references missing project assembly "
+                    f"{reference!r}"
+                )
+
+
 def validate_build_scene() -> None:
     scene = ROOT / EXPECTED_BUILD_SCENE
     if not scene.is_file():
@@ -199,6 +267,8 @@ def main() -> None:
     validate_project_version()
     validate_manifest()
     validate_assets_metadata()
+    validate_meta_guids()
+    validate_assembly_definitions()
     validate_build_scene()
     validate_csharp_namespace_hygiene()
     validate_generated_directories_absent()
