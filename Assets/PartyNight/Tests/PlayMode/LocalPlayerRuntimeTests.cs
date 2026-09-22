@@ -106,6 +106,21 @@ namespace PartyNight.Gameplay.Tests
                 Is.EqualTo(composition.LocalPlayer.transform));
         }
 
+        [Test]
+        public void VisualOnlyPrototypePrimitivesDoNotDisplacePlayerAtStartup()
+        {
+            var composition = FindComposition();
+            var round = composition.HotboxPrototype.RoundController;
+            var player = composition.LocalPlayer.transform;
+
+            Assert.That(
+                Vector3.Distance(player.position, round.SpawnPosition),
+                Is.LessThan(0.1f),
+                "Visual-only prototype geometry must not participate in gameplay " +
+                $"physics during scene initialization. player={player.position}, " +
+                $"spawn={round.SpawnPosition}.");
+        }
+
         [UnityTest]
         public IEnumerator MovementIsCameraRelativeAndCollisionConstrained()
         {
