@@ -1,112 +1,117 @@
 # ACTIVE TASK
 
-## Active task
+## Status
 
-**Cross-platform input foundation**
+**CLOSED — CROSS-PLATFORM INPUT FOUNDATION**
 
-Single active implementation task for Party Night.
+No implementation task is currently active.
 
 Repository:
 `UglyGameFace/The-420-Lobby-Party-Night`
 
-Base:
-`main`
+Merged PR:
+#5 — `Add cross-platform input foundation`
 
-Base head:
-`9448f082f8781917cf6f939f0d49c773ffe34cfd`
+Validated PR head:
+`969c1b1dab9305f5e3519d910ab5f903fcd9b798`
 
-Working branch:
-`foundation/cross-platform-input`
+Squash merge on `main`:
+`373670c3f2c52a4b30c0094b508710d6ed440756`
 
-State:
-**INVESTIGATION / IMPLEMENTATION**
+## Completed scope
 
-## Outcome
-
-Establish one shared action-oriented input foundation for:
+Party Night now has one shared Unity Input System foundation for:
 
 `Move, Look, Jump, Interact, Grab, Dash, UseItem, Emote`
 
-The gameplay layer must not depend on physical key/button names.
+Implemented:
+- authoritative `PartyNightInputActions.inputactions`;
+- keyboard + mouse bindings;
+- generic `<Gamepad>` bindings;
+- mobile on-screen-control target paths that feed the same Gamepad bindings;
+- dedicated `PartyNight.Input` runtime assembly;
+- logical `PartyNightInputFrame`;
+- `PartyNightInputReader` that consumes actions rather than physical device identities;
+- Input System-only project input handling;
+- permanent editor/pre-export input validation;
+- static regression checks;
+- Edit Mode regression coverage;
+- input architecture documentation.
 
-The foundation must support:
-- keyboard + mouse;
-- native gamepad/controller through Unity Input System's generic Gamepad bindings;
-- mobile touch UI through Unity Input System on-screen controls feeding the same logical actions;
-- controller use on mobile where the OS/Input System exposes the hardware;
-- browser input without a separate gameplay implementation.
+## Controller/mobile architecture
 
-## Constraints
+Native controllers do not use brand-specific gameplay forks.
 
-- Unity remains pinned to `6000.3.24f1`.
-- Input System remains pinned to `1.20.0`.
-- Closed consoles remain unsupported.
-- Do not create player movement or Hotbox Havoc gameplay in this task.
-- Do not add a competing input framework.
-- Do not hardcode keyboard controls inside gameplay code.
-- Do not require desktop Unity from the owner.
-- Mobile touch must not be a desktop UI merely shrunk onto a phone.
-- Web gamepad behavior is browser/OS dependent and must not be over-promised until runtime validation.
-- No obsolete, temporary, duplicate, compatibility or backup implementation may remain when the task closes.
+When a supported operating system/browser exposes hardware through Unity's generic Gamepad layout, it feeds the same Party Night gameplay actions.
 
-## Design direction
+Mobile touch is intentionally mapped through Unity Input System on-screen controls targeting the same generic Gamepad paths. Final touch HUD visuals, safe areas, sizing and ergonomics remain a separate runtime/UI task.
 
-Use a source-controlled `.inputactions` asset as the authoritative binding definition.
+Closed consoles remain unsupported.
 
-The action asset will contain one gameplay action map with the eight required actions.
+Web gamepad support remains browser/OS/hardware dependent and must be validated on actual Web builds rather than inferred from desktop support.
 
-Physical input direction:
-- keyboard/mouse bindings;
-- generic `<Gamepad>` bindings so supported Xbox-style, PlayStation-style and generic controllers can flow through the Input System abstraction.
+## Final validation
 
-Mobile touch direction:
-- Unity Input System on-screen controls will target the same Gamepad control paths used by the gameplay action map;
-- this lets touch sticks/buttons drive the same actions without creating touch-only gameplay branches;
-- visual touch HUD/prefab work belongs to the later UI/local-player task unless required for validation here.
+GitHub static workflow #44 passed on exact PR head:
 
-Runtime ownership:
-- input names/contracts live in a dedicated Party Night input assembly;
-- gameplay consumers receive action values/events, not device-specific paths.
+`969c1b1dab9305f5e3519d910ab5f903fcd9b798`
 
-## Investigation notes
+Unity Build Automation build #7 validated the same exact head.
 
-Current authoritative project state:
-- `com.unity.inputsystem@1.20.0` is already pinned and resolved;
-- `ProjectSettings.asset` still has `activeInputHandler: 0`, so this task must intentionally switch the project to the new Input System rather than leave the package installed but inactive;
-- existing gameplay architecture already specifies action-oriented input and the same eight action names;
-- foundation scene currently contains no gameplay/input MonoBehaviour ownership.
+The Build #7 log confirms:
+- correct branch and exact commit checkout;
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- Input System `1.20.0` resolved;
+- `PartyNightInputActions.inputactions` imported through Unity's Input System importer;
+- `PartyNight.Input.dll` compiled;
+- `PartyNight.Foundation.EditModeTests.dll` compiled;
+- Edit Mode tests completed with exit code 0;
+- permanent foundation validation passed during the test run;
+- configured pre-export validation executed without failure;
+- Linux Player build completed with `Result: Success`;
+- Unity reported `Finished exporting player successfully`;
+- UBA ended `Finished: SUCCESS`.
 
-Official Unity documentation confirms that:
-- `.inputactions` files are JSON-based InputActionAssets imported by Unity;
-- InputActionAssets contain action maps and control schemes;
-- Input System on-screen controls create virtual input devices from their configured control paths, so an on-screen stick/button targeting Gamepad controls can feed the same Gamepad bindings used by physical controllers.
+The downloaded Build #7 Linux artifact was independently inspected:
+- archive integrity passed;
+- embedded Cloud Build manifest matched build #7, branch, Unity version and exact source commit;
+- final Player contains `PartyNight.Input.dll`;
+- final Player contains `Unity.InputSystem.dll`.
 
-## Validation plan
+## Post-merge verification
 
-Before merge:
-1. static CI validates the input asset structure, required actions, binding groups, generic Gamepad paths and Input System-only project setting;
-2. Unity imports the `.inputactions` asset successfully;
-3. C# compiles;
-4. Edit Mode tests validate the imported InputActionAsset, action map, control schemes and required bindings;
-5. pre-export validation checks the committed input foundation;
-6. Linux Player export succeeds on the exact final PR head;
-7. complete diff and cleanup are reviewed;
-8. PR merges only after exact-head validation;
-9. merged `main` is rechecked.
+The squash-merge commit on `main` has the exact same Git tree as the exact validated PR head:
 
-## Out of scope
+`dbbac51ac74eccd9b217cbffb8b4409d03355248`
 
-- character movement implementation;
-- camera controller;
-- mobile HUD artwork/layout;
-- safe-area UI implementation;
+That verifies no implementation content changed during merge.
+
+GitHub post-merge static workflow #45 was queued when this closeout was recorded; it is supplementary because the merged implementation tree is byte-identical to the already-passed exact PR head.
+
+## Cleanup
+
+The merged result contains no temporary input generator, compatibility input framework, legacy-input fallback, generated Input Action wrapper, backup copies, or task-only import plumbing.
+
+The gameplay layer still has no movement/controller implementation in this task. This was intentionally an input foundation only.
+
+## Intentionally deferred
+
+Separate future tasks:
+- local player controller and movement;
+- camera control;
+- final mobile touch HUD/prefab;
+- safe-area/layout ergonomics;
+- controller glyph/UI presentation;
 - rebinding/settings UI;
-- multiplayer input transport;
-- authoritative movement validation;
-- Hotbox Havoc mechanics;
-- character art;
-- Discord/backend work.
+- real Android/iOS controller validation;
+- Web gamepad runtime validation;
+- authoritative multiplayer movement;
+- Hotbox Havoc gameplay.
 
-## Next step
+## Next task candidate
 
-Implement the dedicated input assembly, authoritative action asset, validation and Edit Mode regression coverage on this branch.
+**Local player movement + camera foundation**
+
+This should consume `PartyNightInputFrame` only, preserve controller/touch/keyboard parity, and establish the first actual PlayMode/runtime validation gate without bypassing the authoritative multiplayer architecture.
+
+Do not begin that implementation until it becomes the single active task.
