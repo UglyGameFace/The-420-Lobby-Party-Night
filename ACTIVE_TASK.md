@@ -19,7 +19,7 @@ Working branch:
 `prototype/hotbox-havoc-local-visuals`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING AFTER BUILD #15 VISUAL-COLLIDER ROOT FIX**
+**CLOSED — MERGED AND POST-MERGE VALIDATED**
 
 ## Outcome
 
@@ -298,12 +298,11 @@ The improved diagnostics localized the failure to the pre-jump assertion at
 `LocalPlayerRuntimeTests.cs:151` after eight real Unity frames:
 `Player must settle onto the foundation ground before jumping. Expected: True. But was: False.`
 
-This disproves the Build #13 hypothesis that synchronous test execution was the complete
-cause. The actual runtime defect is that `PartyNightCharacterMotor.IsGrounded` delegated
-entirely to `CharacterController.isGrounded`, even though the motor already receives the
-authoritative `CollisionFlags` returned by every `CharacterController.Move`.
+This disproved the Build #13 hypothesis that synchronous test execution was the complete
+cause. It led to an interim motor-grounding hypothesis that Build #15 later disproved
+after richer position/velocity telemetry exposed the real initialization displacement.
 
-Build #14 correction:
+Build #14 interim correction:
 - persist the most recent `CharacterController.Move` collision flags in the motor;
 - define the motor grounded contract from `CollisionFlags.Below` with Unity native
   `isGrounded` as a fallback;
@@ -361,10 +360,58 @@ Build #15 correction:
 
 No input, camera, round-state, networking or package behavior changed in this correction.
 
+## Build #16 final validation
+
+Unity Build Automation Build #16 checked out exact validated revision:
+
+`d36d71bba58d63fed5b9c3ab64377452511c2168`
+
+Confirmed:
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- Edit Mode test run exited 0;
+- all ten Play Mode tests passed;
+- Hotbox lifecycle, exposure/elimination, restart and composition passed;
+- jump/gravity/return-to-ground passed;
+- visual-only startup displacement regression passed;
+- real 1280x720 Unity PNG capture succeeded;
+- exact-revision visual evidence validation passed before and after Player export;
+- Linux Player build completed successfully;
+- overall Unity Build Automation result was SUCCESS;
+- downloaded artifact contained the Linux player, PNG and JSON manifest;
+- manifest revision matched the exact validated SHA;
+- manifest Unity version was `6000.3.24f1`;
+- manifest dimensions were 1280x720;
+- the PNG was manually inspected.
+
+Visual inspection:
+the engineering-prototype arena correctly showed the clear zone, future multiplayer
+spawn markers, fictional haze visualization, neon/lounge accents and local-player
+engineering beacon with no missing-texture checkerboards. The primitive presentation is
+accepted for this engineering milestone and is explicitly not final art.
+
+## Merge and closeout
+
+PR #7 was marked ready only after Build #16 and artifact inspection.
+
+Validated PR head:
+`d36d71bba58d63fed5b9c3ab64377452511c2168`
+
+Squash merge commit on `main`:
+`2855362b73fc96e312dcfecca667800a58f48628`
+
+The squash merge used expected-head protection and its 30-file content delta matched
+the validated PR delta.
+
+Post-merge GitHub static workflow #82:
+**PASS**
+
+This active task is complete. The implementation is merged to `main` and the task lock
+may be released only after this closeout commit itself passes static validation.
+
 ## Next step
 
-Pass GitHub static CI on the exact Build #15 visual-collider root-fix head and review
-the complete delta. Freeze that SHA. Then run one new Unity Build Automation validation
-build. The new startup-displacement regression plus the existing jump test and all
-Hotbox tests must pass before pre-export exact-revision visual validation, Linux Player
-export and artifact inspection.
+None for this closed task.
+
+After the closeout commit passes static validation, create a new ACTIVE_TASK entry for
+the next Party Night milestone. Do not reopen or redesign this completed Hotbox
+engineering prototype unless a verified regression requires it.
