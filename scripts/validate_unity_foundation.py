@@ -402,6 +402,23 @@ def validate_input_foundation() -> None:
     if scheme_groups != {"KeyboardMouse": "KeyboardMouse", "Gamepad": "Gamepad"}:
         fail("input control schemes must be exactly KeyboardMouse and Gamepad")
 
+    scheme_devices = {
+        scheme.get("name"): [device.get("devicePath") for device in scheme.get("devices", [])]
+        for scheme in schemes
+    }
+    if scheme_devices.get("KeyboardMouse") != ["<Keyboard>", "<Mouse>"]:
+        fail("KeyboardMouse scheme must require Keyboard and Mouse")
+    if scheme_devices.get("Gamepad") != ["<Gamepad>"]:
+        fail("Gamepad scheme must require the generic Gamepad layout")
+
+    input_meta = read_required(EXPECTED_INPUT_ACTION_ASSET + ".meta")
+    if "guid: ad5fffad5d744af6939605235845fa84" not in input_meta:
+        fail("input actions asset GUID changed unexpectedly")
+    if "guid: 8404be70184654265930450def6a9037" not in input_meta:
+        fail("input actions asset is not using Unity Input System's InputAction importer")
+    if "generateWrapperCode: 0" not in input_meta:
+        fail("generated Input Action wrapper code must remain disabled")
+
     input_asm = json.loads(read_required("Assets/PartyNight/Input/Runtime/PartyNight.Input.asmdef"))
     if "Unity.InputSystem" not in input_asm.get("references", []):
         fail("PartyNight.Input must reference Unity.InputSystem")

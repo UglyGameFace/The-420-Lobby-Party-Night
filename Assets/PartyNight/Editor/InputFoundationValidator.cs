@@ -57,6 +57,12 @@ namespace PartyNight.Foundation.Editor
                     throw new InvalidOperationException($"{required.Key} expected control type must be {required.Value.controlType}, found {action.expectedControlType}.");
             }
 
+            if (asset.controlSchemes.Count != 2)
+            {
+                throw new InvalidOperationException(
+                    $"Expected exactly two input control schemes, found {asset.controlSchemes.Count}.");
+            }
+
             RequireScheme(asset, PartyNightInputNames.KeyboardMouseScheme, "KeyboardMouse");
             RequireScheme(asset, PartyNightInputNames.GamepadScheme, "Gamepad");
 
