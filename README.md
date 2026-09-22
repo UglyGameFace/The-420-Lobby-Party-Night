@@ -83,8 +83,8 @@ Closed consoles are explicitly out of scope.
 
 ## Status
 
-Repository bootstrap, shared Unity foundation, the first buildable scene, authoritative project settings/URP activation, cross-platform Input Action foundation, and local player movement + third-person camera foundation are complete and post-merge verified.
+Repository bootstrap, shared Unity foundation, the first buildable scene, authoritative project settings/URP activation, cross-platform Input Action foundation, local player movement + third-person camera, and the local Hotbox Havoc engineering prototype are complete and post-merge verified.
 
-No Hotbox Havoc gameplay loop has been validated yet.
+Hotbox Havoc Build #16 passed Edit Mode, all ten Play Mode tests, exact-revision visual validation, Linux Player export, and artifact inspection.
 
-The current focused implementation task is the **local Hotbox Havoc prototype + visual validation**. The Unity Cloud artifact will include a real runtime-rendered PNG so visible progress is reviewed alongside logs.
+The current focused implementation task is the **authoritative multiplayer foundation**: one canonical NGO + Unity Transport session bootstrap with explicit dedicated-server and client roles. Network player spawning/movement replication, server-owned Hotbox round state, lobby/matchmaking, and WebSocket validation remain subsequent tasks.
