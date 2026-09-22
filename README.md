@@ -38,9 +38,9 @@ Validated project pin:
 - Unity Transport 2.7.4
 - Unity Test Framework 1.6.0
 
-Unity Build Automation has opened the project on the pinned editor, resolved the package graph, compiled Party Night scripts, passed the Edit Mode smoke test, and passed the pre-export foundation validator.
+Unity Build Automation has opened the project on the pinned editor, resolved the package graph, compiled Party Night scripts, passed the Edit Mode tests, passed the pre-export foundation validator, imported the real Party Night foundation scene, and successfully exported a Linux Player build.
 
-The first cloud Player export intentionally stopped because no build scene exists yet. A real scene belongs to the next focused task and was not fabricated just to make CI green.
+The first real source-controlled scene now lives at `Assets/PartyNight/Scenes/PartyNightFoundation.unity` and is owned by `ProjectSettings/EditorBuildSettings.asset`.
 
 See `docs/UNITY_SETUP.md`, `docs/UNITY_CLOUD_VALIDATION.md`, and `docs/DEPENDENCIES.md`.
 
@@ -73,8 +73,8 @@ Closed consoles are explicitly out of scope.
 
 ## Status
 
-Repository bootstrap and the shared Unity project foundation are complete and post-merge verified.
+Repository bootstrap, the shared Unity project foundation, and the first real buildable Unity scene are complete and post-merge verified.
 
 No Hotbox Havoc gameplay implementation has been validated yet.
 
-The next focused task is the first real Unity scene, URP project assets, and abstract input foundation.
+The next focused task is authoritative Unity project settings + `packages-lock.json` + real URP activation, followed by the abstract Input Action foundation.
