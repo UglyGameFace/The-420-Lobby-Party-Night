@@ -205,6 +205,32 @@ def validate_assembly_definitions() -> None:
                 )
 
 
+def validate_capture_stage_contract() -> None:
+    bootstrap = ROOT / "Assets" / "PartyNight" / "Editor" / "AuthoritativeSettingsBootstrap.cs"
+    active_task = (ROOT / "ACTIVE_TASK.md").read_text(encoding="utf-8")
+
+    if bootstrap.exists() and "CAPTURE STAGE" not in active_task:
+        fail(
+            "temporary AuthoritativeSettingsBootstrap.cs exists outside the explicit "
+            "capture stage; remove it before final validation/merge"
+        )
+
+    editor_asmdef = (
+        ROOT
+        / "Assets"
+        / "PartyNight"
+        / "Editor"
+        / "PartyNight.Foundation.Editor.asmdef"
+    )
+    data = json.loads(editor_asmdef.read_text(encoding="utf-8"))
+    references = data.get("references", [])
+    if bootstrap.exists() and "Unity.RenderPipelines.Universal.Runtime" not in references:
+        fail(
+            "settings capture bootstrap requires Unity.RenderPipelines.Universal.Runtime "
+            "in PartyNight.Foundation.Editor.asmdef"
+        )
+
+
 def validate_build_scene() -> None:
     scene = ROOT / EXPECTED_BUILD_SCENE
     if not scene.is_file():
@@ -301,6 +327,7 @@ def main() -> None:
     validate_assets_metadata()
     validate_meta_guids()
     validate_assembly_definitions()
+    validate_capture_stage_contract()
     validate_build_scene()
     validate_csharp_namespace_hygiene()
     validate_generated_directories_absent()
