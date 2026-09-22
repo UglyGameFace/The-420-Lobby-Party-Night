@@ -47,6 +47,20 @@ namespace PartyNight.Gameplay.Tests
             yield return null;
         }
 
+        [TearDown]
+        public void ReportTestResult()
+        {
+            var context = TestContext.CurrentContext;
+            var outcome = context.Result.Outcome;
+            var message = context.Result.Message ?? string.Empty;
+            var stackTrace = context.Result.StackTrace ?? string.Empty;
+
+            Debug.Log(
+                $"PARTY_NIGHT_TEST_RESULT | {context.Test.FullName} | " +
+                $"{outcome.Status} | {outcome.Label ?? string.Empty} | {message} | " +
+                $"STACK: {stackTrace}");
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {
@@ -73,6 +87,9 @@ namespace PartyNight.Gameplay.Tests
             var composition = FindComposition();
 
             Assert.That(composition.IsComposed, Is.True);
+            Assert.That(
+                composition.transform.Find(FoundationSceneComposition.RuntimeRootName),
+                Is.Not.Null);
             Assert.That(composition.LocalPlayer, Is.Not.Null);
             Assert.That(composition.Ground, Is.Not.Null);
             Assert.That(
@@ -87,6 +104,21 @@ namespace PartyNight.Gameplay.Tests
             Assert.That(
                 composition.OrbitCamera.Target,
                 Is.EqualTo(composition.LocalPlayer.transform));
+        }
+
+        [Test]
+        public void VisualOnlyPrototypePrimitivesDoNotDisplacePlayerAtStartup()
+        {
+            var composition = FindComposition();
+            var round = composition.HotboxPrototype.RoundController;
+            var player = composition.LocalPlayer.transform;
+
+            Assert.That(
+                Vector3.Distance(player.position, round.SpawnPosition),
+                Is.LessThan(0.1f),
+                "Visual-only prototype geometry must not participate in gameplay " +
+                $"physics during scene initialization. player={player.position}, " +
+                $"spawn={round.SpawnPosition}.");
         }
 
         [UnityTest]
@@ -114,24 +146,35 @@ namespace PartyNight.Gameplay.Tests
             Assert.That(end.y, Is.GreaterThanOrEqualTo(-0.02f));
         }
 
-        [Test]
-        public void JumpUsesExplicitGravityAndReturnsToGround()
+        [UnityTest]
+        public IEnumerator JumpUsesExplicitGravityAndReturnsToGround()
         {
             var composition = FindComposition();
             var controller = composition.LocalController;
             controller.enabled = false;
             var motor = controller.Motor;
 
+            // CharacterController.isGrounded describes the most recent Move call.
+            // Exercise the motor once per frame, matching its real Update lifecycle,
+            // instead of issuing many CharacterController.Move calls in one frame.
             for (var index = 0; index < 8; index++)
             {
                 motor.Tick(Vector3.zero, false, 0.02f);
+                yield return null;
             }
 
-            Assert.That(motor.IsGrounded, Is.True);
+            Assert.That(
+                motor.IsGrounded,
+                Is.True,
+                "Player must settle onto the foundation ground before jumping. " +
+                $"y={composition.LocalPlayer.transform.position.y:F4}, " +
+                $"verticalVelocity={motor.Velocity.y:F4}, " +
+                $"nativeGrounded={motor.CharacterController.isGrounded}.");
 
             var startY = composition.LocalPlayer.transform.position.y;
             motor.Tick(Vector3.zero, true, 0.02f);
             Assert.That(motor.Velocity.y, Is.GreaterThan(0f));
+            yield return null;
 
             var maximumY = composition.LocalPlayer.transform.position.y;
             for (var index = 0; index < 120; index++)
@@ -140,10 +183,17 @@ namespace PartyNight.Gameplay.Tests
                 maximumY = Mathf.Max(
                     maximumY,
                     composition.LocalPlayer.transform.position.y);
+                yield return null;
             }
 
             Assert.That(maximumY, Is.GreaterThan(startY + 0.2f));
-            Assert.That(motor.IsGrounded, Is.True);
+            Assert.That(
+                motor.IsGrounded,
+                Is.True,
+                "Player must return to the foundation ground after the jump. " +
+                $"y={composition.LocalPlayer.transform.position.y:F4}, " +
+                $"verticalVelocity={motor.Velocity.y:F4}, " +
+                $"nativeGrounded={motor.CharacterController.isGrounded}.");
         }
 
         [Test]

@@ -255,3 +255,21 @@ The required workflow must remain operable from:
 - Active render pipeline behavior: https://docs.unity3d.com/6000.1/Documentation/Manual/srp-setting-render-pipeline-asset.html
 - Unity Transport overview/WebSocket constraint: https://docs-multiplayer.unity3d.com/transport/current/about/
 - NGO client-server topology: https://docs-multiplayer.unity3d.com/netcode/2.2.0/terms-concepts/client-server/
+
+
+## 16. Visual progress evidence gate
+
+Once a milestone has visible runtime content, logs alone are insufficient evidence.
+
+Required for visual gameplay milestones:
+- render the real Unity runtime scene, not generated concept art;
+- capture a deterministic PNG during Play Mode validation;
+- keep generated captures outside tracked source;
+- include the validated PNG with the Unity Cloud build artifact;
+- fail the Unity Cloud build if visual evidence expected by the task is missing;
+- inspect the visual artifact before merge for obvious rendering, framing, missing-material, and presentation regressions.
+
+Current capture:
+`VisualValidation/HotboxHavoc_Overview.png`
+
+The capture is a development-validation artifact. It is not final marketing art and must not force prototype visuals to become permanent production art.

@@ -32,6 +32,13 @@ EXPECTED_INPUT_ACTIONS = {
     "UseItem": ("Button", "Button"),
     "Emote": ("Button", "Button"),
 }
+EXPECTED_HOTBOX_PROTOTYPE_FILES = (
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundPhase.cs",
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundController.cs",
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototype.cs",
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeVisuals.cs",
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeHud.cs",
+)
 EXPECTED_GAMEPAD_BINDINGS = {
     "Move": "<Gamepad>/leftStick",
     "Look": "<Gamepad>/rightStick",
@@ -45,6 +52,10 @@ EXPECTED_GAMEPAD_BINDINGS = {
 
 EXPECTED_PACKAGES = {
     "com.unity.inputsystem": "1.20.0",
+    "com.unity.modules.audio": "1.0.0",
+    "com.unity.modules.imageconversion": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.physics": "1.0.0",
     "com.unity.netcode.gameobjects": "2.13.2",
     "com.unity.render-pipelines.universal": "17.3.0",
     "com.unity.test-framework": "1.6.0",
@@ -149,6 +160,63 @@ def validate_lockfile() -> None:
                 f"packages-lock.json {package}: expected {expected_version}, "
                 f"found {actual_version!r}"
             )
+        if entry.get("depth") != 0:
+            fail(
+                f"packages-lock.json {package} must be a direct dependency "
+                f"with depth 0, found {entry.get('depth')!r}"
+            )
+
+def validate_builtin_module_ownership() -> None:
+    scene = read_required(EXPECTED_BUILD_SCENE)
+    hotbox_capture = read_required(
+        "Assets/PartyNight/Tests/PlayMode/HotboxHavocRuntimeTests.cs"
+    )
+    motor = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightCharacterMotor.cs"
+    )
+    composition = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs"
+    )
+    hud = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeHud.cs"
+    )
+
+    required_by_usage = {}
+
+    if "AudioListener:" in scene:
+        required_by_usage["com.unity.modules.audio"] = "foundation scene AudioListener"
+
+    if "EncodeToPNG" in hotbox_capture:
+        required_by_usage["com.unity.modules.imageconversion"] = "PNG visual capture"
+
+    if (
+        "CharacterController" in motor
+        or "Physics." in motor
+        or "CharacterController" in composition
+        or "Physics." in composition
+    ):
+        required_by_usage["com.unity.modules.physics"] = "gameplay physics/CharacterController"
+
+    if "OnGUI" in hud or "GUI." in hud or "GUIStyle" in hud:
+        required_by_usage["com.unity.modules.imgui"] = "prototype IMGUI HUD"
+
+    manifest = json.loads(read_required("Packages/manifest.json"))
+    lock = json.loads(read_required("Packages/packages-lock.json"))
+    manifest_deps = manifest.get("dependencies", {})
+    lock_deps = lock.get("dependencies", {})
+
+    for package, reason in sorted(required_by_usage.items()):
+        if manifest_deps.get(package) != "1.0.0":
+            fail(
+                f"{package} must be explicitly declared because Party Night uses {reason}"
+            )
+        entry = lock_deps.get(package)
+        if not isinstance(entry, dict) or entry.get("depth") != 0:
+            fail(
+                f"{package} must be locked as a direct depth-0 dependency "
+                f"because Party Night uses {reason}"
+            )
+
 
 def validate_assets_metadata() -> None:
     assets = ROOT / "Assets"
@@ -464,6 +532,11 @@ def validate_gameplay_foundation() -> None:
         "Assets/PartyNight/Gameplay/Runtime/PartyNightOrbitCamera.cs",
         "Assets/PartyNight/Gameplay/Runtime/PartyNightLocalPlayerController.cs",
         "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundPhase.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundController.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototype.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeVisuals.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeHud.cs",
     )
     for relative in required_runtime_files:
         read_required(relative)
@@ -509,6 +582,36 @@ def validate_gameplay_foundation() -> None:
     if playmode_asm.get("includePlatforms") != []:
         fail("PlayMode test assembly must not be Editor-only")
 
+    local_player_tests = read_required(
+        "Assets/PartyNight/Tests/PlayMode/LocalPlayerRuntimeTests.cs"
+    )
+    jump_signature = (
+        "[UnityTest]\n"
+        "        public IEnumerator JumpUsesExplicitGravityAndReturnsToGround()"
+    )
+    if jump_signature not in local_player_tests:
+        fail(
+            "jump grounding regression test must run as a UnityTest across real frames"
+        )
+    jump_start = local_player_tests.index(jump_signature)
+    jump_end = local_player_tests.find(
+        "        [", jump_start + len(jump_signature)
+    )
+    jump_body = (
+        local_player_tests[jump_start:]
+        if jump_end < 0
+        else local_player_tests[jump_start:jump_end]
+    )
+    if jump_body.count("yield return null;") < 3:
+        fail(
+            "jump grounding regression test must advance Unity frames while settling, "
+            "jumping and landing"
+        )
+    if "PARTY_NIGHT_TEST_RESULT" not in local_player_tests:
+        fail("PlayMode tests must emit durable cloud result diagnostics")
+    if "VisualOnlyPrototypePrimitivesDoNotDisplacePlayerAtStartup" not in local_player_tests:
+        fail("PlayMode tests must guard against visual-only collider spawn displacement")
+
     composition_meta = read_required(
         "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs.meta"
     )
@@ -532,6 +635,113 @@ def validate_gameplay_foundation() -> None:
         fail("project-wide input reader must not disable or destroy the shared Action Asset")
     if "device is Pointer" not in input_reader:
         fail("PartyNightInputReader must classify pointer delta look separately")
+
+
+def validate_hotbox_havoc_prototype() -> None:
+    for relative in EXPECTED_HOTBOX_PROTOTYPE_FILES:
+        read_required(relative)
+
+    round_controller = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundController.cs"
+    )
+    required_constants = (
+        "CountdownSeconds = 3f",
+        "ActiveRoundSeconds = 20f",
+        "StartClearRadius = 8.5f",
+        "EndClearRadius = 3f",
+        "ExposureToEliminateSeconds = 2.5f",
+    )
+    for value in required_constants:
+        if value not in round_controller:
+            fail(f"Hotbox Havoc prototype is missing required tuning constant: {value}")
+
+    prototype = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototype.cs"
+    )
+    if "VisualValidation/HotboxHavoc_Overview.png" not in prototype:
+        fail("Hotbox Havoc prototype visual artifact path changed unexpectedly")
+    if "VisualValidation/HotboxHavoc_Overview.json" not in prototype:
+        fail("Hotbox Havoc exact-revision manifest path changed unexpectedly")
+
+    composition = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs"
+    )
+    if composition.count("AddComponent<HotboxHavocPrototype>()") != 1:
+        fail("FoundationSceneComposition must create exactly one HotboxHavocPrototype")
+    if "new GameObject(HotboxHavocPrototype.RuntimeName)" not in composition:
+        fail("Hotbox Havoc prototype must own a child root, not rename Foundation Runtime")
+
+    prototype_source = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototype.cs"
+    )
+    if "gameObject.name = RuntimeName" in prototype_source:
+        fail("Hotbox Havoc prototype must not rename its composition host")
+
+    visual_code = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeVisuals.cs"
+    )
+    if "Universal Render Pipeline/Unlit" not in visual_code:
+        fail("Hotbox prototype visuals must use the project URP pipeline")
+    if "SpawnMarkerCount = 16" not in visual_code:
+        fail("Hotbox prototype must expose 16 future multiplayer spawn markers")
+    if "collider.enabled = false;" not in visual_code:
+        fail("visual-only prototype colliders must be disabled immediately")
+    disable_index = visual_code.index("collider.enabled = false;")
+    destroy_index = visual_code.index("Destroy(collider);", disable_index)
+    if destroy_index < 0 or disable_index > destroy_index:
+        fail("visual-only colliders must be disabled before deferred destruction")
+
+    runtime_files = list(EXPECTED_HOTBOX_PROTOTYPE_FILES) + [
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs",
+    ]
+    for relative in runtime_files:
+        text = read_required(relative)
+        if "UnityEngine.InputSystem" in text:
+            fail(f"{relative} bypasses PartyNight.Input with direct Input System access")
+        for physical_path in ("<Keyboard>", "<Mouse>", "<Gamepad>", "<Touchscreen>"):
+            if physical_path in text:
+                fail(f"{relative} hardcodes physical input path {physical_path}")
+
+    capture_test = read_required(
+        "Assets/PartyNight/Tests/PlayMode/HotboxHavocRuntimeTests.cs"
+    )
+    for required in (
+        "CapturesRealUnityVisualProgressArtifact",
+        "camera.Render()",
+        "Texture2D",
+        "EncodeToPNG",
+        "1280",
+        "720",
+    ):
+        if required not in capture_test:
+            fail(f"visual validation Play Mode test missing {required}")
+
+    exporter = read_required(
+        "Assets/PartyNight/Editor/HotboxHavocVisualArtifactExporter.cs"
+    )
+    if "#if UNITY_CLOUD_BUILD" not in exporter:
+        fail("visual artifact exporter must enforce capture presence on Unity Cloud")
+    if "BuildFailedException" not in exporter:
+        fail("Unity Cloud visual artifact exporter must fail when evidence is missing")
+    if "BUILD_REVISION" not in exporter:
+        fail("visual artifact exporter must bind evidence to BUILD_REVISION")
+    if "ValidateCurrentCloudCapture" not in exporter:
+        fail("visual artifact exporter must validate evidence before Player export")
+    if "HotboxHavocPrototype.VisualCaptureManifestRelativePath" not in exporter:
+        fail("visual artifact exporter must copy the centralized exact-revision evidence manifest")
+
+    project_validator = read_required(
+        "Assets/PartyNight/Editor/ProjectFoundationValidator.cs"
+    )
+    if "HotboxHavocVisualArtifactExporter.ValidateCurrentCloudCapture();" not in project_validator:
+        fail("pre-export must validate exact-revision Hotbox visual evidence")
+
+    gitignore = read_required(".gitignore")
+    if "/VisualValidation/" not in gitignore:
+        fail("generated VisualValidation directory must be gitignored")
+
+    if (ROOT / "VisualValidation").exists():
+        fail("generated VisualValidation output must never be committed")
 
 
 def validate_capture_cleanup() -> None:
@@ -647,6 +857,7 @@ def main() -> None:
     validate_project_version()
     validate_manifest()
     validate_lockfile()
+    validate_builtin_module_ownership()
     validate_assets_metadata()
     validate_meta_guids()
     validate_assembly_definitions()
@@ -654,6 +865,7 @@ def main() -> None:
     validate_render_pipeline_assembly_references()
     validate_input_foundation()
     validate_gameplay_foundation()
+    validate_hotbox_havoc_prototype()
     validate_capture_cleanup()
     validate_build_scene()
     validate_csharp_namespace_hygiene()

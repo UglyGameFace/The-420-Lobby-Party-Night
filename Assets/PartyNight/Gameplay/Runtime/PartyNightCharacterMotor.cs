@@ -46,6 +46,12 @@ namespace PartyNight.Gameplay
             }
         }
 
+        public void ResetMotion()
+        {
+            horizontalVelocity = Vector3.zero;
+            verticalVelocity = GroundedVerticalSpeed;
+        }
+
         public void Tick(Vector3 desiredWorldMove, bool jumpPressed, float deltaTime)
         {
             if (characterController == null)
@@ -84,7 +90,6 @@ namespace PartyNight.Gameplay
             var motion =
                 (horizontalVelocity + Vector3.up * verticalVelocity) * deltaTime;
             var collisionFlags = characterController.Move(motion);
-
             if ((collisionFlags & CollisionFlags.Below) != 0 && verticalVelocity < 0f)
             {
                 verticalVelocity = GroundedVerticalSpeed;
