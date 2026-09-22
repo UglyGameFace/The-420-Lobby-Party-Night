@@ -95,7 +95,7 @@ def validate_generated_directories_absent() -> None:
 
 
 def validate_conflict_markers() -> None:
-    markers = ("<<<<<<<", ">>>>>>>")
+    markers = ("<" * 7, ">" * 7)
     for path in ROOT.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
             continue
