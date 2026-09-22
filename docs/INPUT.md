@@ -6,6 +6,8 @@ Authoritative asset:
 
 `Assets/PartyNight/Input/PartyNightInputActions.inputactions`
 
+The asset is assigned as Unity Input System's **project-wide actions** through `ProjectSettings/EditorBuildSettings.asset`. Input System therefore preloads it for Player builds and exposes it through `InputSystem.actions`; Party Night does not duplicate the asset in Resources and does not generate a wrapper class.
+
 ## Gameplay action contract
 
 | Action | Type | Keyboard / mouse | Generic gamepad |
@@ -19,7 +21,16 @@ Authoritative asset:
 | UseItem | Button | left mouse | right trigger |
 | Emote | Button | G | D-pad Up |
 
-Gameplay code consumes these actions rather than physical device identities.
+Gameplay consumes these actions rather than physical device identities.
+
+## Look semantics
+
+`Look` deliberately supports two input quantities.
+
+- Pointer/mouse delta is accumulated motion in pixels for the current update. Party Night labels that frame as `PartyNightLookInputMode.Delta`.
+- Physical Gamepad and mobile on-screen sticks are persistent normalized controls. Party Night labels them `PartyNightLookInputMode.Rate`.
+
+The orbit camera applies pointer sensitivity without multiplying by frame time, while rate input is scaled by elapsed time. This prevents mouse sensitivity from changing with FPS and prevents controller/touch rotation speed from changing with FPS.
 
 ## Native controllers
 
@@ -42,18 +53,28 @@ Touch UI will use Unity Input System on-screen controls targeting the same Gamep
 - use item -> `<Gamepad>/rightTrigger`
 - emote -> `<Gamepad>/dpad/up`
 
-On-screen controls create a virtual input device from these control paths, so touch widgets and physical gamepads feed the same action bindings.
+On-screen controls create a virtual Gamepad from these paths, so touch widgets and physical gamepads feed the same action bindings.
 
-This task defines the contract, not the final touch HUD. Visual sizing, safe areas and ergonomics require the later mobile UI task and real-device testing.
+Final visual sizing, safe areas and ergonomics remain a separate mobile UI task and require real-device validation.
 
 ## Runtime API
 
-`PartyNightInputReader` owns a cloned action asset instance and exposes a `PartyNightInputFrame` containing Move, Look and one-frame button presses. Future movement and gameplay code consumes that logical frame rather than reading devices directly.
+`PartyNightInputReader.CreateFromProjectWideActions()` clones the preloaded project-wide Action Asset into a local reader instance.
+
+`PartyNightInputFrame` contains:
+- Move;
+- Look;
+- LookMode;
+- one-frame button presses for Jump, Interact, Grab, Dash, UseItem and Emote.
+
+Movement/camera code consumes this frame. It does not query Keyboard, Mouse, Gamepad or Touchscreen devices directly.
 
 ## Validation
 
-Static CI verifies the action map, actions, bindings, control schemes, assembly references and Input System-only project setting.
+Static CI verifies the action map, actions, bindings, control schemes, project-wide assignment, assembly references and Input System-only project setting.
 
-Unity Edit Mode tests verify the asset imports, the permanent input validator passes, generic keyboard/mouse/gamepad bindings resolve against synthetic devices, and the runtime reader consumes the imported asset.
+Unity Edit Mode tests verify the asset imports, project-wide actions resolve, generic keyboard/mouse/gamepad bindings resolve, and the runtime reader can be constructed.
 
-Pre-export validation runs the committed input validator before every UBA Player build.
+Runtime movement/camera behavior is covered by Party Night's Play Mode tests.
+
+Pre-export validation runs the committed input and gameplay validators before every UBA Player build.

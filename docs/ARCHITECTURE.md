@@ -203,3 +203,23 @@ These are intentionally deferred:
 - analytics provider.
 
 They are not needed to prove the first gameplay foundation and should not become accidental dependencies.
+
+
+## Local movement and camera foundation
+
+The first local movement implementation uses Unity `CharacterController`.
+
+This is a client runtime foundation, not a declaration that the client becomes authoritative for networked movement.
+
+Responsibilities are separated:
+- `PartyNightInputReader` converts Input System actions into a logical `PartyNightInputFrame`;
+- `PartyNightLocalPlayerController` converts Move into camera-relative world intent and forwards Jump;
+- `PartyNightCharacterMotor` owns one collision-constrained CharacterController movement implementation;
+- `PartyNightOrbitCamera` owns local third-person view state and runs its follow update after movement;
+- `FoundationSceneComposition` composes the current foundation scene only.
+
+The future authoritative multiplayer task must validate/drive the same movement contract rather than introducing a second unrelated player controller.
+
+The foundation scene intentionally has no placeholder character model. Collision and movement can be validated before final character art exists.
+
+Discord remains outside all of these runtime components.

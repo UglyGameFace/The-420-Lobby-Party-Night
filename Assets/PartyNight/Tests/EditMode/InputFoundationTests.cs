@@ -55,6 +55,19 @@ namespace PartyNight.Foundation.Tests
         }
 
         [Test]
+        public void ProjectWideReaderUsesAssignedAsset()
+        {
+            Assert.That(InputSystem.actions, Is.Not.Null);
+            Assert.That(
+                AssetDatabase.GetAssetPath(InputSystem.actions),
+                Is.EqualTo(PartyNightInputNames.AssetPath));
+
+            using var reader = PartyNightInputReader.CreateFromProjectWideActions();
+            reader.Enable();
+            Assert.That(reader.Enabled, Is.True);
+        }
+
+        [Test]
         public void RuntimeReaderConsumesLogicalActionFrame()
         {
             var source = AssetDatabase.LoadAssetAtPath<InputActionAsset>(PartyNightInputNames.AssetPath);

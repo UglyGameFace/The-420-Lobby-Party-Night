@@ -20,7 +20,10 @@ namespace PartyNight.Input
 
         public PartyNightInputReader(InputActionAsset source)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
 
             actions = UnityEngine.Object.Instantiate(source);
             gameplay = actions.FindActionMap(PartyNightInputNames.GameplayMap, true);
@@ -36,6 +39,18 @@ namespace PartyNight.Input
 
         public bool Enabled => !disposed && gameplay.enabled;
 
+        public static PartyNightInputReader CreateFromProjectWideActions()
+        {
+            var source = InputSystem.actions;
+            if (source == null)
+            {
+                throw new InvalidOperationException(
+                    "Party Night project-wide Input Actions are not assigned.");
+            }
+
+            return new PartyNightInputReader(source);
+        }
+
         public void Enable()
         {
             ThrowIfDisposed();
@@ -44,15 +59,25 @@ namespace PartyNight.Input
 
         public void Disable()
         {
-            if (!disposed) gameplay.Disable();
+            if (!disposed)
+            {
+                gameplay.Disable();
+            }
         }
 
         public PartyNightInputFrame ReadFrame()
         {
             ThrowIfDisposed();
+
+            var lookValue = look.ReadValue<Vector2>();
+            var lookMode = look.activeControl?.device is Pointer
+                ? PartyNightLookInputMode.Delta
+                : PartyNightLookInputMode.Rate;
+
             return new PartyNightInputFrame(
                 move.ReadValue<Vector2>(),
-                look.ReadValue<Vector2>(),
+                lookValue,
+                lookMode,
                 jump.WasPressedThisFrame(),
                 interact.WasPressedThisFrame(),
                 grab.WasPressedThisFrame(),
@@ -63,9 +88,14 @@ namespace PartyNight.Input
 
         public void Dispose()
         {
-            if (disposed) return;
+            if (disposed)
+            {
+                return;
+            }
+
             gameplay.Disable();
             disposed = true;
+
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
@@ -78,7 +108,10 @@ namespace PartyNight.Input
 
         private void ThrowIfDisposed()
         {
-            if (disposed) throw new ObjectDisposedException(nameof(PartyNightInputReader));
+            if (disposed)
+            {
+                throw new ObjectDisposedException(nameof(PartyNightInputReader));
+            }
         }
     }
 }

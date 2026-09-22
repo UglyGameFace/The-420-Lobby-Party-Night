@@ -8,4 +8,5 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/PartyNight/Scenes/PartyNightFoundation.unity
     guid: 7b8f6f38b4e84b4aa2bb5dc6b124d5a1
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: ad5fffad5d744af6939605235845fa84, type: 3}

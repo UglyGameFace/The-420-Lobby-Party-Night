@@ -44,9 +44,15 @@ Rules:
 
 UBA Edit Mode tests run on foundation/editor/configuration changes.
 
-Play Mode tests become mandatory when runtime GameObjects, player controllers, scene lifecycle, physics behavior, UI flows, or network runtime behavior exist.
+Play Mode tests are now mandatory because Party Night has runtime GameObjects, a local player controller, CharacterController movement, camera behavior, and scene composition.
 
 The target remains configured to fail when required tests fail.
+
+Current UBA test requirement:
+- Run project unit tests: ON;
+- Edit Mode: ON;
+- Play Mode: ON;
+- fail the build when any required suite fails: ON.
 
 Tests must cover regressions that already occurred. Examples:
 - required build scene exists and is enabled;
