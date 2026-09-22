@@ -417,7 +417,7 @@ def validate_input_foundation() -> None:
     expected_project_wide_actions = (
         "com.unity.input.settings.actions: "
         "{fileID: -944628639613478452, "
-        f"guid: {EXPECTED_INPUT_ACTION_GUID}, type: 3}"
+        "guid: " + EXPECTED_INPUT_ACTION_GUID + ", type: 3}"
     )
     if expected_project_wide_actions not in build_settings:
         fail("Project-wide Input Actions must be assigned in EditorBuildSettings")
