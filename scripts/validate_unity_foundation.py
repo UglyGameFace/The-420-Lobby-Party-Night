@@ -591,7 +591,7 @@ def validate_build_scene() -> None:
 
     expected_script = (
         "m_Script: {fileID: 11500000, "
-        f"guid: {EXPECTED_FOUNDATION_COMPOSITION_GUID}, type: 3}"
+        "guid: " + EXPECTED_FOUNDATION_COMPOSITION_GUID + ", type: 3}"
     )
     if scene_text.count("m_Script:") != 1:
         fail("foundation scene must contain exactly one serialized MonoBehaviour")
