@@ -54,6 +54,8 @@ EXPECTED_PACKAGES = {
     "com.unity.inputsystem": "1.20.0",
     "com.unity.modules.audio": "1.0.0",
     "com.unity.modules.imageconversion": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.physics": "1.0.0",
     "com.unity.netcode.gameobjects": "2.13.2",
     "com.unity.render-pipelines.universal": "17.3.0",
     "com.unity.test-framework": "1.6.0",
@@ -158,6 +160,63 @@ def validate_lockfile() -> None:
                 f"packages-lock.json {package}: expected {expected_version}, "
                 f"found {actual_version!r}"
             )
+        if entry.get("depth") != 0:
+            fail(
+                f"packages-lock.json {package} must be a direct dependency "
+                f"with depth 0, found {entry.get('depth')!r}"
+            )
+
+def validate_builtin_module_ownership() -> None:
+    scene = read_required(EXPECTED_BUILD_SCENE)
+    hotbox_capture = read_required(
+        "Assets/PartyNight/Tests/PlayMode/HotboxHavocRuntimeTests.cs"
+    )
+    motor = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightCharacterMotor.cs"
+    )
+    composition = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs"
+    )
+    hud = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeHud.cs"
+    )
+
+    required_by_usage = {}
+
+    if "AudioListener:" in scene:
+        required_by_usage["com.unity.modules.audio"] = "foundation scene AudioListener"
+
+    if "EncodeToPNG" in hotbox_capture:
+        required_by_usage["com.unity.modules.imageconversion"] = "PNG visual capture"
+
+    if (
+        "CharacterController" in motor
+        or "Physics." in motor
+        or "CharacterController" in composition
+        or "Physics." in composition
+    ):
+        required_by_usage["com.unity.modules.physics"] = "gameplay physics/CharacterController"
+
+    if "OnGUI" in hud or "GUI." in hud or "GUIStyle" in hud:
+        required_by_usage["com.unity.modules.imgui"] = "prototype IMGUI HUD"
+
+    manifest = json.loads(read_required("Packages/manifest.json"))
+    lock = json.loads(read_required("Packages/packages-lock.json"))
+    manifest_deps = manifest.get("dependencies", {})
+    lock_deps = lock.get("dependencies", {})
+
+    for package, reason in sorted(required_by_usage.items()):
+        if manifest_deps.get(package) != "1.0.0":
+            fail(
+                f"{package} must be explicitly declared because Party Night uses {reason}"
+            )
+        entry = lock_deps.get(package)
+        if not isinstance(entry, dict) or entry.get("depth") != 0:
+            fail(
+                f"{package} must be locked as a direct depth-0 dependency "
+                f"because Party Night uses {reason}"
+            )
+
 
 def validate_assets_metadata() -> None:
     assets = ROOT / "Assets"
@@ -762,6 +821,7 @@ def main() -> None:
     validate_project_version()
     validate_manifest()
     validate_lockfile()
+    validate_builtin_module_ownership()
     validate_assets_metadata()
     validate_meta_guids()
     validate_assembly_definitions()
