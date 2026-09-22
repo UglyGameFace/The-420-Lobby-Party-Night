@@ -6,6 +6,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_UNITY = "6000.3.24f1"
 EXPECTED_REVISION = "4e7b9b5b6244"
+EXPECTED_BUILD_SCENE = "Assets/PartyNight/Scenes/PartyNightFoundation.unity"
+EXPECTED_BUILD_SCENE_GUID = "7b8f6f38b4e84b4aa2bb5dc6b124d5a1"
 EXPECTED_PACKAGES = {
     "com.unity.inputsystem": "1.20.0",
     "com.unity.netcode.gameobjects": "2.13.2",
@@ -104,6 +106,39 @@ def validate_assets_metadata() -> None:
             fail(f"missing asset metadata: {meta.relative_to(ROOT)}")
 
 
+def validate_build_scene() -> None:
+    scene = ROOT / EXPECTED_BUILD_SCENE
+    if not scene.is_file():
+        fail(f"missing build scene: {EXPECTED_BUILD_SCENE}")
+
+    scene_text = scene.read_text(encoding="utf-8")
+    for required_name in ("m_Name: Main Camera", "m_Name: Directional Light", "SceneRoots:"):
+        if required_name not in scene_text:
+            fail(f"build scene is missing required serialized content: {required_name}")
+
+    scene_meta = scene.with_name(scene.name + ".meta")
+    if not scene_meta.is_file():
+        fail(f"missing build scene metadata: {scene_meta.relative_to(ROOT)}")
+    if f"guid: {EXPECTED_BUILD_SCENE_GUID}" not in scene_meta.read_text(encoding="utf-8"):
+        fail("build scene metadata GUID does not match the expected build settings GUID")
+
+    settings = ROOT / "ProjectSettings" / "EditorBuildSettings.asset"
+    if not settings.is_file():
+        fail("missing ProjectSettings/EditorBuildSettings.asset")
+
+    settings_text = settings.read_text(encoding="utf-8")
+    required_block = (
+        "  - enabled: 1\n"
+        f"    path: {EXPECTED_BUILD_SCENE}\n"
+        f"    guid: {EXPECTED_BUILD_SCENE_GUID}"
+    )
+    if required_block not in settings_text:
+        fail("foundation scene is not enabled with the expected path/GUID")
+
+    if settings_text.count("  - enabled: 1") != 1:
+        fail("exactly one build scene must be enabled during the foundation scene task")
+
+
 def validate_generated_directories_absent() -> None:
     present = sorted(name for name in FORBIDDEN_ROOT_DIRS if (ROOT / name).exists())
     if present:
@@ -137,6 +172,7 @@ def main() -> None:
     validate_project_version()
     validate_manifest()
     validate_assets_metadata()
+    validate_build_scene()
     validate_generated_directories_absent()
     validate_no_stale_artifacts()
     validate_conflict_markers()
