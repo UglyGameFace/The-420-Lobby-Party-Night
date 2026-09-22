@@ -147,8 +147,14 @@ Cloud-path update:
 - `ProjectFoundationValidator.PreExport` now provides the UBA validation hook after script compilation;
 - local batch-mode validation remains optional and is no longer a project-owner requirement.
 
+Exact-head/static validation completed after the cloud-path changes:
+- PR #2 remained mergeable;
+- branch remained 0 commits behind `main`;
+- final changed-file list remained limited to the intended Unity foundation/docs/CI scope;
+- GitHub static workflow run #8 passed on pre-bookkeeping head `d9eab892342e26a9a95838b3f2f56018f634237e`;
+- stale/superseded artifact checks passed on that head.
+
 Still required:
-- inspect final PR head/diff/status after the cloud-path changes;
 - connect this GitHub repository to Unity Build Automation from the Unity Dashboard;
 - run Unity 6000.3.24f1 package resolution, script compilation, the pre-export validator, and Edit Mode tests in UBA;
 - review authoritative resolved package/settings evidence before merging.
@@ -209,7 +215,7 @@ Base head: `8af5aad9ea96168bf790cc7d456cc77a559e21de`
 
 Working branch: `foundation/unity-project`
 
-Last implementation head before this task-record update: `89e7e2015c94a013a17329833567670b80379059`
+Last exact pre-bookkeeping validated head: `d9eab892342e26a9a95838b3f2f56018f634237e`
 
 PR: #2, draft.
 
@@ -217,4 +223,4 @@ Merge status: not merged; intentionally blocked on Unity Build Automation editor
 
 ## Next step
 
-Validate the new exact PR head and static workflow, then keep PR #2 unmerged until Unity Build Automation has resolved the project, compiled scripts, run the pre-export validator, and passed Edit Mode tests.
+Keep PR #2 draft and unmerged until the one-time Unity Dashboard repository connection is authorized and Unity Build Automation has resolved the project, compiled scripts, run the pre-export validator, and passed Edit Mode tests.
