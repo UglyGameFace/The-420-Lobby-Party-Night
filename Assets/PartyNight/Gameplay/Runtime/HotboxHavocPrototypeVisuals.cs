@@ -271,6 +271,10 @@ namespace PartyNight.Gameplay
                 var collider = primitive.GetComponent<Collider>();
                 if (collider != null)
                 {
+                    // Destroy is deferred until end-of-frame. Disable immediately so
+                    // visual-only primitives can never participate in gameplay physics
+                    // during their creation frame.
+                    collider.enabled = false;
                     Destroy(collider);
                 }
             }
