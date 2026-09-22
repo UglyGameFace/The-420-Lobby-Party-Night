@@ -548,6 +548,14 @@ def validate_gameplay_foundation() -> None:
         fail("Party Night movement motor must use CharacterController")
     if "Rigidbody" in motor:
         fail("Party Night movement motor must not introduce a parallel Rigidbody controller")
+    if "lastCollisionFlags" not in motor:
+        fail("Party Night movement motor must persist CharacterController collision flags")
+    if "lastCollisionFlags = collisionFlags;" not in motor:
+        fail("Party Night movement motor must store every CharacterController.Move result")
+    if "groundedBeforeMove = IsGrounded;" not in motor:
+        fail("Party Night jump gating must use the motor-owned grounded contract")
+    if "(lastCollisionFlags & CollisionFlags.Below)" not in motor:
+        fail("Party Night IsGrounded must include the most recent Below collision flag")
 
     for relative in required_runtime_files:
         text = read_required(relative)
