@@ -2,176 +2,208 @@
 
 ## Active task / outcome
 
-Bootstrap **The 420 Lobby: Party Night** as an isolated production repository and establish the architecture baseline required before gameplay implementation.
+Create the first real Unity project foundation for **The 420 Lobby: Party Night** without starting gameplay implementation.
 
-Outcome achieved for this task:
-- repository boundaries are explicit;
-- Unity/source-control hygiene is established;
-- supported/unsupported platform assumptions are documented;
-- client/server/service ownership is defined;
-- the Unity/networking baseline is documented without claiming unimplemented runtime behavior.
+Outcome:
+- pin the exact Unity editor patch;
+- pin the initial required Unity packages;
+- establish a minimal source-controlled Unity project layout;
+- establish Party Night runtime/test assembly boundaries;
+- add static repository validation and Unity cloud validation hooks;
+- make Unity Build Automation the authoritative phone-only editor/test validation path;
+- enforce cleanup so no superseded, duplicate, temporary, debug, backup, or abandoned implementation remains in the affected area.
 
 ## Scope
 
 Included:
-- standalone Party Night repository only;
-- repository initialization;
-- Unity-oriented .gitignore;
-- architecture and platform documentation;
-- cross-platform constraints;
-- authoritative multiplayer boundaries;
-- PR validation and merge.
+- Party Night repository only;
+- Unity project metadata;
+- `Packages/manifest.json`;
+- exact editor/package pins;
+- minimal Party Night runtime assembly;
+- minimal Edit Mode smoke test;
+- editor-side foundation validator;
+- GitHub static validation workflow;
+- Unity Build Automation pre-export validation hook;
+- phone-only cloud validation documentation;
+- dependency/license documentation;
+- exact-head PR validation.
 
 Excluded:
-- Hotbox Havoc gameplay code;
-- movement/input implementation;
-- Unity scenes/prefabs/assets;
-- Discord/Dank Shield integration;
-- production hosting/backend;
-- additional minigames;
+- player movement;
+- Hotbox Havoc mechanics;
+- scenes/prefabs/art/audio;
+- character model imports or purchases;
+- input action maps and touch controls;
+- network gameplay implementation;
+- Discord integration;
+- persistent backend/hosting;
 - modifications to any other repository.
 
 ## Status
 
-**COMPLETE — POST-MERGE VERIFIED**
+**VALIDATION**
 
-This bootstrap task is closed. No Unity gameplay/runtime/build claim is implied by completion of this repository-foundation task.
+Implementation is present on `foundation/unity-project`. Static CI is green. Unity Build Automation is now the authoritative remaining editor/test validation path for the phone-only workflow.
 
 ## Findings / root cause
 
-This was a new-project bootstrap rather than a bug fix.
+The previous bootstrap task was post-merge verified and left no Unity project files.
 
-Initial inspection on 2026-09-21 confirmed:
-- repository: `UglyGameFace/The-420-Lobby-Party-Night`;
-- repository was empty;
-- no pre-existing Party Night code, branches, Unity project, tests, scenes, packages, or build configuration existed;
-- GitHub reports the repository as public.
+Current upstream research on 2026-09-21 established:
+- Unity `6000.3.24f1` is the latest verified 6.3 LTS patch found before implementation, released 2026-09-10;
+- its changeset is `4e7b9b5b6244`;
+- Unity 6.3 uses URP `17.3.0`;
+- Input System `1.20.0` is in the Unity 6.3 patch stream;
+- Netcode for GameObjects `2.13.2` is updated in Unity `6000.3.24f1`;
+- Unity Transport `2.7.4` is in the Unity 6.3 patch stream;
+- the selected official Unity packages are intended for Unity-dependent projects and use Unity package licensing/third-party notices that must be retained and reviewed at release.
 
-Technology research confirmed:
-- Unity 6.3 is the current LTS family and is supported through December 2027;
-- Unity supports dedicated-server build profiles;
-- Unity Web cannot rely on unrestricted direct IP sockets, so browser-compatible networking is a first-order architectural constraint.
+Unity project settings such as `ProjectSettings.asset`, URP renderer assets, and Input Action assets are intentionally not fabricated by hand. Unity can regenerate missing project settings on editor open; generated serialized settings must then be reviewed and source-controlled from the pinned editor.
 
 ## Execution path
 
-No runtime execution path exists yet.
-
-The planned ownership boundary is:
+For this task:
 
 ```text
-Input device
-  -> client input abstraction
-  -> client gameplay intent
-  -> network transport
-  -> authoritative game server
-  -> shared simulation / round state
-  -> replicated state
-  -> client presentation / HUD
-
-Persistent services and Discord integration remain outside the match simulation.
+ProjectSettings/ProjectVersion.txt
+  -> Unity Editor version selection
+Packages/manifest.json
+  -> Unity Package Manager resolution
+Assets/PartyNight runtime assembly
+  -> Unity script compilation
+Assets/PartyNight Edit Mode tests
+  -> Unity Test Framework
+Assets/PartyNight Editor validator
+  -> Unity Build Automation pre-export validation after script compilation
+Assets/PartyNight Edit Mode tests
+  -> Unity Build Automation test gate
+GitHub static workflow
+  -> repository structure/version/stale-artifact checks without Unity
 ```
+
+Gameplay execution does not exist yet.
 
 ## Architecture
 
-Baseline decisions:
-- Unity 6.3 LTS engine family;
-- URP rendering direction;
-- Unity Input System with abstract actions;
-- authoritative dedicated-server multiplayer;
-- Netcode for GameObjects + Unity Transport as the initial networking candidate;
-- browser transport compatibility must be proven before final network-stack lock;
-- separate ownership for client, game server, persistence, and Discord integration;
-- 12–16 player initial Hotbox Havoc target;
-- closed consoles explicitly out of scope.
+Pinned foundation:
+- Unity Editor: `6000.3.24f1`
+- editor changeset: `4e7b9b5b6244`
+- URP: `17.3.0`
+- Input System: `1.20.0`
+- Netcode for GameObjects: `2.13.2`
+- Unity Transport: `2.7.4`
+- Unity Test Framework: `1.6.0`
 
-Deferred to later validated tasks:
-- exact Unity 6000.3 patch;
-- exact package manifest;
-- final transport configuration;
-- hosting provider;
-- persistence technology;
-- account/authentication implementation.
+Package presence does not mean networking or input gameplay has been implemented.
+
+URP renderer assets, actual Input Actions, scenes, prefabs, build profiles, and multiplayer objects remain excluded until created through the pinned Unity Editor.
 
 ## Changes
 
-Merged repository foundation:
-- `README.md` seed on `main`;
-- `.gitignore`;
-- `ACTIVE_TASK.md`;
-- `docs/ARCHITECTURE.md`;
-- `docs/PLATFORM_SUPPORT.md`;
-- `.github/PULL_REQUEST_TEMPLATE.md`.
+Implemented on the task branch:
+- pinned `ProjectSettings/ProjectVersion.txt`;
+- pinned `Packages/manifest.json`;
+- created `PartyNight.Foundation` runtime assembly;
+- created immutable project identity constants for the product name and 12–16 player initial match range;
+- created an Edit Mode smoke test assembly/test;
+- created an Editor-only foundation validator for exact editor/package resolution;
+- exposed `ProjectFoundationValidator.PreExport` for Unity Build Automation;
+- tracked Unity `.meta` files for all new `Assets/` content and folders;
+- added `scripts/validate_unity_foundation.py`;
+- added GitHub static validation workflow;
+- added dependency/license evidence documentation;
+- added Unity setup/validation documentation;
+- added `docs/UNITY_CLOUD_VALIDATION.md` for the phone-only UBA workflow;
+- extended static validation to reject stale/superseded artifact files and directories;
+- updated README foundation status.
 
-No gameplay, external integration, binary asset, generated Unity folder, or other-project code was introduced.
+No gameplay, scene, prefab, art, model, external service, or other-project code was added.
 
 ## Validation
 
 Completed:
-- repository identity and initial empty state verified;
-- focused branch `bootstrap/project-foundation` created from the seed `main`;
-- Unity LTS/support, dedicated-server capability, and Web networking constraints checked against current Unity documentation;
-- exact PR head validated as `a38ec7f5c2aad49c943ad5894ac89c884df814ac`;
-- PR patch inspected on that exact head;
-- changed files limited to the five expected bootstrap text files beyond the seed README;
-- no binary/generated/secret/conflict/unrelated-project files found in the PR diff;
-- PR was mergeable;
-- no CI/status checks or workflow runs existed on the validated head because CI has not yet been created;
-- PR #1 marked ready only after exact-head inspection;
-- merge performed with expected-head protection;
-- PR #1 confirmed merged;
-- squash merge commit confirmed as `80fe640c1f3d50651d46a27a0674c9a99ba32544`;
-- merged `main` compared against the seed and confirmed to contain only the expected five bootstrap additions.
+- branch compared against `main`: 0 behind;
+- changed-file list inspected and limited to the expected Unity-foundation/docs/CI files;
+- exact `ProjectVersion.txt` content fetched from the branch and verified;
+- `Packages/manifest.json` fetched, parsed, and exact pins verified;
+- all three assembly definition JSON files fetched and structurally inspected;
+- Python validator fetched and syntax-compiled successfully;
+- branch file list checked for required Unity `.meta` pairings;
+- no `Library/`, `Temp/`, `Obj/`, `Logs/`, `UserSettings/`, `Build/`, or `Builds/` content appears in the branch diff;
+- no scene/prefab/binary asset was introduced;
+- Unity package/editor pins checked against current upstream evidence.
 
-Not applicable to this bootstrap scope:
-- Unity compilation;
-- Edit Mode/Play Mode tests;
-- desktop/mobile/Web builds;
-- multiplayer runtime tests.
+Completed after PR creation:
+- draft PR #2 opened against `main`;
+- first static workflow run failed because the conflict-marker scanner matched its own literal marker strings;
+- root cause was corrected by constructing the marker strings without embedding literal conflict markers in the validator source;
+- static workflow run #2 passed on exact head `1070af75de1003e7ce53c5b3f10182040802a8c0`;
+- PR remained mergeable after the validator fix.
 
-Those require the actual Unity project, which intentionally does not exist yet.
+Cloud-path update:
+- Unity Build Automation was selected as the authoritative editor/build validation service because it supports Unity 6000.3 LTS, GitHub-connected builds, pre-export methods, and Edit Mode/Play Mode test gates;
+- GameCI is not the primary path because its current Personal-license setup expects a locally activated Unity license, which conflicts with the phone-only owner workflow;
+- `ProjectFoundationValidator.PreExport` now provides the UBA validation hook after script compilation;
+- local batch-mode validation remains optional and is no longer a project-owner requirement.
 
-External note:
-- Qodo posted that its review is paused because its subscription is inactive. This did not block the documentation-only bootstrap but means Qodo supplied no automated review evidence.
+Exact-head/static validation completed after the cloud-path changes:
+- PR #2 remained mergeable;
+- branch remained 0 commits behind `main`;
+- final changed-file list remained limited to the intended Unity foundation/docs/CI scope;
+- GitHub static workflow run #8 passed on pre-bookkeeping head `d9eab892342e26a9a95838b3f2f56018f634237e`;
+- stale/superseded artifact checks passed on that head.
+
+Still required:
+- connect this GitHub repository to Unity Build Automation from the Unity Dashboard;
+- run Unity 6000.3.24f1 package resolution, script compilation, the pre-export validator, and Edit Mode tests in UBA;
+- review authoritative resolved package/settings evidence before merging.
+
+A successful static check is not a Unity compile.
 
 ## Cleanup
 
-- No temporary/debug code exists.
-- No Unity-generated directories are tracked.
-- No obsolete or duplicate Party Night implementation existed to remove.
-- No other repository was modified.
+Hard rule: no superseded, obsolete, duplicate, temporary, debug, backup, compatibility, or abandoned implementation may remain in the affected area when this task closes.
+
+Current cleanup state:
+- no temporary/debug scripts;
+- no generated Unity directories;
+- no fake `packages-lock.json`;
+- no hand-authored scene/prefab/URP asset;
+- no `.old`, `.bak`, `.orig`, `.rej`, or temporary backup files;
+- no legacy/deprecated/obsolete duplicate directories;
+- no unrelated repository changes;
+- static validation now rejects common stale/superseded artifact patterns.
 
 ## Conflicts
 
-No duplicate runtime ownership exists yet.
-
-The architecture reserves authoritative match-state ownership for the dedicated game server.
+No competing Unity project, runtime assembly, input system owner, network manager, scene architecture, or gameplay implementation exists.
 
 ## Blockers / risks
 
-Remaining project risks, not blockers for this completed task:
-- exact Unity patch/package versions still require real project resolution;
-- browser networking must be proven end-to-end before transport selection is final;
-- mobile/Web performance remains unvalidated;
-- repository visibility is currently public, so all future changes must remain secret-safe.
+Current external validation requirement:
+- the GitHub repository must be connected to Unity Build Automation in the user's Unity Dashboard. That account authorization is external to this GitHub connection and cannot be completed by repository code alone.
+
+Additional risks:
+- the first authoritative cloud editor run may generate additional ProjectSettings and package-resolution output; those results must be inspected before merge;
+- Web transport behavior is not validated by package installation;
+- repository visibility remains public.
 
 ## Backlog
 
 Not active:
-- create and validate the real Unity project;
-- shared Hotbox Havoc gameplay foundation;
-- abstract input/player controller;
-- camera;
-- authoritative networking;
-- lobby/ready/round lifecycle;
-- spawn/elimination/results;
-- smoke/fog mechanic;
-- touch controls and safe-area UI;
-- Web/mobile builds;
-- reconnect handling;
-- performance profiling/tiers;
-- persistence/accounts/cosmetics/stats;
-- Discord integration API;
-- additional minigames from the master specification.
+- evaluate/import a polished modular character base, including the ithappy packs discussed with the user; explicitly avoid blocky/Roblox-like character art;
+- create URP renderer/pipeline assets in Unity;
+- activate/configure Input System and create abstract action maps;
+- local movement/controller;
+- Hotbox Havoc local prototype;
+- authoritative multiplayer;
+- lobby/round lifecycle;
+- Web/mobile validation;
+- performance profiling;
+- persistent services;
+- Discord integration;
+- additional minigames.
 
 ## Git state
 
@@ -179,20 +211,16 @@ Repository: `UglyGameFace/The-420-Lobby-Party-Night`
 
 Base/default branch: `main`
 
-Initial seed commit: `2935d4f352650d731262c24a69e84cb7136d88bf`
+Base head: `8af5aad9ea96168bf790cc7d456cc77a559e21de`
 
-Task branch: `bootstrap/project-foundation`
+Working branch: `foundation/unity-project`
 
-Validated PR head: `a38ec7f5c2aad49c943ad5894ac89c884df814ac`
+Last exact pre-bookkeeping validated head: `d9eab892342e26a9a95838b3f2f56018f634237e`
 
-PR: #1
+PR: #2, draft.
 
-PR status: merged
-
-Squash merge commit: `80fe640c1f3d50651d46a27a0674c9a99ba32544`
-
-Current `main` head after this bookkeeping update is verified externally after commit creation; embedding a commit's own SHA inside itself is self-referential.
+Merge status: not merged; intentionally blocked on Unity Build Automation editor/test validation.
 
 ## Next step
 
-Create the actual Unity project in a new focused task, pin and validate the Unity/package versions together, establish the URP/Input System foundation, and add the first real compile/build validation without starting Hotbox Havoc gameplay prematurely.
+Keep PR #2 draft and unmerged until the one-time Unity Dashboard repository connection is authorized and Unity Build Automation has resolved the project, compiled scripts, run the pre-export validator, and passed Edit Mode tests.

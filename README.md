@@ -27,6 +27,21 @@ Current development priority:
 
 Additional minigames remain backlog items until the shared Hotbox Havoc foundation is validated.
 
+## Unity foundation
+
+Current project pin:
+
+- Unity 6000.3.24f1
+- URP 17.3.0
+- Input System 1.20.0
+- Netcode for GameObjects 2.13.2
+- Unity Transport 2.7.4
+- Unity Test Framework 1.6.0
+
+See `docs/UNITY_SETUP.md`, `docs/UNITY_CLOUD_VALIDATION.md`, and `docs/DEPENDENCIES.md`.
+
+Package presence is not a claim that gameplay networking, input actions, URP assets, or builds have already been implemented or validated.
+
 ## Supported platform families
 
 - Windows
@@ -51,7 +66,9 @@ Closed consoles are explicitly out of scope.
 - One implementation task is active at a time.
 - `ACTIVE_TASK.md` is the source of truth for current engineering state.
 - Never commit secrets or Unity-generated folders such as `Library/`, `Temp/`, `Logs/`, or `Obj/`.
+- Unity `.meta` files are source-controlled and must not be casually regenerated.
+- Superseded, obsolete, duplicate, temporary, debug, backup, and abandoned code/artifacts must be removed from the affected area before a task can close. Git history is the backup.
 
 ## Status
 
-Repository bootstrap is in progress. No gameplay implementation has been validated yet.
+The repository bootstrap is complete. The real Unity project foundation is the current active task. No Hotbox Havoc gameplay implementation has been validated yet.
