@@ -19,7 +19,7 @@ Working branch:
 `prototype/hotbox-havoc-local-visuals`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING**
+**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #12 DIAGNOSTIC HARDENING**
 
 ## Outcome
 
@@ -216,10 +216,42 @@ the module required by the committed scene enabled.
 
 The exact-revision PNG/manifest validation remains unchanged.
 
+## Build #12 findings
+
+Unity Build Automation Build #12 checked out exact revision:
+
+`abd3191d56bc9b4513ad2a4232a408b4ce4c2124`
+
+Confirmed:
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- `com.unity.modules.audio@1.0.0` and `com.unity.modules.imageconversion@1.0.0` resolved;
+- the Build #11 AudioListener deletion error is gone;
+- Edit Mode completed with exit code 0;
+- Play Mode executed and produced the real Hotbox Havoc PNG;
+- Play Mode still exited with code 2.
+
+Important correction:
+the Build #11 Audio module issue was a real project defect, but Build #12 proves it was
+not the underlying Play Mode assertion/test failure. The Unity Cloud console log does
+not print the failing NUnit test name or assertion message; it only writes the detailed
+result to its internal TestResults.xml and reports the aggregate failure.
+
+Hardening implemented after Build #12:
+- explicitly declare directly used built-in modules for Audio, Image Conversion,
+  Physics and IMGUI;
+- lock all directly owned modules at depth 0;
+- static validation derives module requirements from actual scene/runtime/test usage;
+- both Play Mode fixtures now emit durable `PARTY_NIGHT_TEST_RESULT` outcome lines,
+  including the NUnit test name, status, label and message.
+
+Do not guess at the hidden failing assertion. The next Unity run must expose the exact
+test result if anything still fails.
+
 ## Next step
 
-Pass GitHub static CI on the exact Audio-module-fix head and review the exact diff.
-Then run a **new** Unity Build Automation build with Edit Mode and Play Mode enabled.
-The build must check out the exact final PR head, execute both suites successfully,
-validate the current-revision PNG/manifest, complete pre-export validation, export
-the Linux Player, and publish the visual evidence artifact for inspection.
+Pass GitHub static CI on the exact Build #12 hardening head and review the complete
+delta. Then run one new Unity Build Automation build on that exact frozen revision.
+If Play Mode fails, use the emitted PARTY_NIGHT_TEST_RESULT lines to fix the exact
+failing test/root cause rather than inferring from aggregate Unity output. If it passes,
+continue through exact-revision visual evidence validation, Linux Player export and
+artifact inspection before merge.
