@@ -126,10 +126,15 @@ Completed:
 - no scene/prefab/binary asset was introduced;
 - Unity package/editor pins checked against current upstream evidence.
 
+Completed after PR creation:
+- draft PR #2 opened against `main`;
+- first static workflow run failed because the conflict-marker scanner matched its own literal marker strings;
+- root cause was corrected by constructing the marker strings without embedding literal conflict markers in the validator source;
+- static workflow run #2 passed on exact head `1070af75de1003e7ce53c5b3f10182040802a8c0`;
+- PR remained mergeable after the validator fix.
+
 Still required:
-- open draft PR;
-- let GitHub static workflow execute on the PR;
-- inspect exact PR head/diff/status;
+- inspect final PR head/diff/status after this task-record update;
 - run Unity 6000.3.24f1 package resolution, script compilation, editor validator, and Edit Mode test on an editor/license-capable runner;
 - review generated `packages-lock.json` and serialized ProjectSettings before merging.
 
@@ -185,10 +190,10 @@ Working branch: `foundation/unity-project`
 
 Last implementation head before this task-record update: `89e7e2015c94a013a17329833567670b80379059`
 
-PR: not opened yet.
+PR: #2, draft.
 
-Merge status: not merged.
+Merge status: not merged; intentionally blocked on real Unity Editor validation.
 
 ## Next step
 
-Open a draft PR, inspect the resulting exact head and GitHub static check, then keep the PR unmerged until the pinned Unity Editor has generated/resolved the remaining authoritative project files and passed compilation/tests.
+Validate the new exact PR head after this bookkeeping update, then keep PR #2 unmerged until the pinned Unity Editor has generated/resolved the remaining authoritative project files and passed compilation/tests.
