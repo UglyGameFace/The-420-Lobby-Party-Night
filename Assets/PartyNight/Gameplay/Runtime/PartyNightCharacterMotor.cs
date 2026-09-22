@@ -26,6 +26,7 @@ namespace PartyNight.Gameplay
         private CharacterController characterController;
         private Vector3 horizontalVelocity;
         private float verticalVelocity = GroundedVerticalSpeed;
+        private CollisionFlags lastCollisionFlags;
 
         public CharacterController CharacterController => characterController;
 
@@ -33,7 +34,9 @@ namespace PartyNight.Gameplay
             new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z);
 
         public bool IsGrounded =>
-            characterController != null && characterController.isGrounded;
+            characterController != null &&
+            (((lastCollisionFlags & CollisionFlags.Below) != 0) ||
+             characterController.isGrounded);
 
         private void Awake()
         {
@@ -50,6 +53,7 @@ namespace PartyNight.Gameplay
         {
             horizontalVelocity = Vector3.zero;
             verticalVelocity = GroundedVerticalSpeed;
+            lastCollisionFlags = CollisionFlags.None;
         }
 
         public void Tick(Vector3 desiredWorldMove, bool jumpPressed, float deltaTime)
@@ -74,7 +78,7 @@ namespace PartyNight.Gameplay
                 targetHorizontalVelocity,
                 acceleration * deltaTime);
 
-            var groundedBeforeMove = characterController.isGrounded;
+            var groundedBeforeMove = IsGrounded;
             if (groundedBeforeMove && verticalVelocity < 0f)
             {
                 verticalVelocity = GroundedVerticalSpeed;
@@ -90,6 +94,7 @@ namespace PartyNight.Gameplay
             var motion =
                 (horizontalVelocity + Vector3.up * verticalVelocity) * deltaTime;
             var collisionFlags = characterController.Move(motion);
+            lastCollisionFlags = collisionFlags;
 
             if ((collisionFlags & CollisionFlags.Below) != 0 && verticalVelocity < 0f)
             {
