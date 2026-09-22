@@ -19,7 +19,7 @@ Working branch:
 `prototype/hotbox-havoc-local-visuals`
 
 State:
-**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #10 DEPENDENCY FIX**
+**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #11 AUDIO-MODULE FIX**
 
 ## Outcome
 
@@ -183,9 +183,43 @@ Implemented correction:
 
 The exact-revision PNG/manifest evidence design remains unchanged.
 
+## Build #11 findings
+
+Unity Build Automation Build #11 checked out exact revision:
+
+`c82221c123bb27f93046d43f07d1e7de649d5f28`
+
+Confirmed:
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- C# script compilation succeeded;
+- Edit Mode test run completed with exit code 0;
+- Play Mode launched and executed;
+- the real 1280x720 Hotbox Havoc PNG capture was produced;
+- the previous `Texture2D.EncodeToPNG()` compile failure is resolved.
+
+Build #11 still failed during Play Mode because every load of the committed
+`PartyNightFoundation` scene emitted:
+
+`AudioListener component deleted: Component belongs to a disabled built-in package.`
+
+The scene legitimately serializes an AudioListener, while the project package
+contract did not enable Unity's built-in Audio module. Unity Test Framework treats
+unexpected error/assert/exception logs as test failures.
+
+Implemented correction:
+- declare `com.unity.modules.audio@1.0.0` in `Packages/manifest.json`;
+- lock the built-in Audio module in `Packages/packages-lock.json`;
+- require the Audio module in static package validation.
+
+Do not suppress the scene-load error with `LogAssert`; the correct fix is to keep
+the module required by the committed scene enabled.
+
+The exact-revision PNG/manifest validation remains unchanged.
+
 ## Next step
 
-Pass GitHub static CI on the exact dependency-fix head, review the final diff, then
-run a **new** Unity Build Automation build with Edit Mode and Play Mode enabled.
-The new build must check out the exact final PR head. Download its artifact and
-inspect the real Unity PNG before merge.
+Pass GitHub static CI on the exact Audio-module-fix head and review the exact diff.
+Then run a **new** Unity Build Automation build with Edit Mode and Play Mode enabled.
+The build must check out the exact final PR head, execute both suites successfully,
+validate the current-revision PNG/manifest, complete pre-export validation, export
+the Linux Player, and publish the visual evidence artifact for inspection.
