@@ -19,7 +19,7 @@ Working branch:
 `prototype/hotbox-havoc-local-visuals`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING AFTER BUILD #14 MOTOR GROUNDING FIX**
+**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #15 VISUAL-COLLIDER ROOT FIX**
 
 ## Outcome
 
@@ -315,9 +315,56 @@ Build #14 correction:
 
 No Hotbox round, visual, camera or input logic changed.
 
+## Build #15 findings
+
+Unity Build Automation Build #15 checked out exact revision:
+
+`f2735f7dffa651ad32aa99c2e57c362764b7a1b6`
+
+Confirmed:
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- Edit Mode passed;
+- all five Hotbox Havoc Play Mode tests passed;
+- camera semantics passed;
+- foundation local-player composition passed;
+- movement/collision passed;
+- the real Hotbox Havoc PNG capture passed;
+- the sole failure remained
+  `LocalPlayerRuntimeTests.JumpUsesExplicitGravityAndReturnsToGround`.
+
+The added telemetry finally exposed the physical state at the failing pre-jump assertion:
+- player Y: `7.9034`;
+- motor vertical velocity: `-6.0481`;
+- native CharacterController grounded: `false`.
+
+The foundation composes the player at Y `0.05`, so the test was not observing a player
+that failed to recognize the floor. The player had already been displaced upward by
+almost eight meters during initialization.
+
+Root cause identified in the prototype visual primitive lifecycle:
+`HotboxHavocPrototypeVisuals.CreatePrimitive` creates Unity primitives with colliders.
+For visual-only primitives it called `Destroy(collider)`, but normal Unity destruction is
+deferred until end-of-frame. The large clear-zone cylinder and other visual-only
+colliders therefore remained active during the scene creation frame and could
+participate in CharacterController overlap recovery before their deferred removal.
+
+Build #15 correction:
+- immediately set every visual-only primitive collider `enabled = false` before
+  scheduling `Destroy(collider)`;
+- keep the collider only for intentional arena walls;
+- revert the speculative Build #14 motor-owned grounding workaround so movement code
+  returns to the previously validated native CharacterController grounding contract;
+- add a Play Mode regression test proving visual-only prototype primitives cannot move
+  the player away from the intended spawn during initialization;
+- add a static guard requiring immediate collider disable before deferred destruction;
+- retain the frame-accurate jump test and detailed cloud diagnostics.
+
+No input, camera, round-state, networking or package behavior changed in this correction.
+
 ## Next step
 
-Pass GitHub static CI on the exact Build #14 motor-grounding-fix head and review the
-complete delta. Freeze that SHA. Then run one new Unity Build Automation validation
-build. All nine Play Mode tests must pass before pre-export exact-revision visual
-validation, Linux Player export and artifact inspection.
+Pass GitHub static CI on the exact Build #15 visual-collider root-fix head and review
+the complete delta. Freeze that SHA. Then run one new Unity Build Automation validation
+build. The new startup-displacement regression plus the existing jump test and all
+Hotbox tests must pass before pre-export exact-revision visual validation, Linux Player
+export and artifact inspection.
