@@ -22,6 +22,22 @@ FORBIDDEN_ROOT_DIRS = {
     "Build",
     "Builds",
 }
+FORBIDDEN_STALE_SUFFIXES = {
+    ".bak",
+    ".old",
+    ".orig",
+    ".rej",
+    ".tmp",
+}
+FORBIDDEN_STALE_DIR_NAMES = {
+    "backup",
+    "deprecated",
+    "legacy",
+    "obsolete",
+    "old",
+    "temp",
+    "temporary",
+}
 TEXT_SUFFIXES = {
     ".cs",
     ".json",
@@ -94,6 +110,18 @@ def validate_generated_directories_absent() -> None:
         fail("generated/build directories must not be tracked: " + ", ".join(present))
 
 
+def validate_no_stale_artifacts() -> None:
+    for path in ROOT.rglob("*"):
+        if ".git" in path.parts:
+            continue
+
+        if path.is_dir() and path.name.lower() in FORBIDDEN_STALE_DIR_NAMES:
+            fail(f"stale/superseded directory is not allowed: {path.relative_to(ROOT)}")
+
+        if path.is_file() and path.suffix.lower() in FORBIDDEN_STALE_SUFFIXES:
+            fail(f"stale/superseded file is not allowed: {path.relative_to(ROOT)}")
+
+
 def validate_conflict_markers() -> None:
     markers = ("<" * 7, ">" * 7)
     for path in ROOT.rglob("*"):
@@ -110,6 +138,7 @@ def main() -> None:
     validate_manifest()
     validate_assets_metadata()
     validate_generated_directories_absent()
+    validate_no_stale_artifacts()
     validate_conflict_markers()
     print("Party Night Unity foundation static validation passed.")
 
