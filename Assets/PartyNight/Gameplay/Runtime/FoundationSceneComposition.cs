@@ -93,8 +93,13 @@ namespace PartyNight.Gameplay
                     newLocalPlayer.AddComponent<PartyNightLocalPlayerController>();
                 newLocalController.Initialize(motor, newOrbitCamera);
 
+                var newHotboxObject =
+                    new GameObject(HotboxHavocPrototype.RuntimeName);
+                newHotboxObject.transform.SetParent(
+                    newRuntimeRoot.transform,
+                    false);
                 newHotboxPrototype =
-                    newRuntimeRoot.AddComponent<HotboxHavocPrototype>();
+                    newHotboxObject.AddComponent<HotboxHavocPrototype>();
                 newHotboxPrototype.Initialize(
                     newLocalPlayer.transform,
                     motor,

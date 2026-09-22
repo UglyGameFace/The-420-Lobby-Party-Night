@@ -575,6 +575,14 @@ def validate_hotbox_havoc_prototype() -> None:
     )
     if composition.count("AddComponent<HotboxHavocPrototype>()") != 1:
         fail("FoundationSceneComposition must create exactly one HotboxHavocPrototype")
+    if "new GameObject(HotboxHavocPrototype.RuntimeName)" not in composition:
+        fail("Hotbox Havoc prototype must own a child root, not rename Foundation Runtime")
+
+    prototype_source = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototype.cs"
+    )
+    if "gameObject.name = RuntimeName" in prototype_source:
+        fail("Hotbox Havoc prototype must not rename its composition host")
 
     visual_code = read_required(
         "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeVisuals.cs"

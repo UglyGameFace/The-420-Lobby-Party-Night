@@ -34,8 +34,6 @@ namespace PartyNight.Gameplay
             if (motor == null) throw new System.ArgumentNullException(nameof(motor));
             if (orbitCamera == null) throw new System.ArgumentNullException(nameof(orbitCamera));
 
-            gameObject.name = RuntimeName;
-
             roundController = gameObject.AddComponent<HotboxHavocRoundController>();
             roundController.Initialize(localPlayer, motor, transform.position);
 

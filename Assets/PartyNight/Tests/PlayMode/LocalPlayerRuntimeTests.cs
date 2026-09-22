@@ -73,6 +73,9 @@ namespace PartyNight.Gameplay.Tests
             var composition = FindComposition();
 
             Assert.That(composition.IsComposed, Is.True);
+            Assert.That(
+                composition.transform.Find(FoundationSceneComposition.RuntimeRootName),
+                Is.Not.Null);
             Assert.That(composition.LocalPlayer, Is.Not.Null);
             Assert.That(composition.Ground, Is.Not.Null);
             Assert.That(
