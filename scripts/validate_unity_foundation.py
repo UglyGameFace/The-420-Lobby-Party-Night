@@ -89,6 +89,37 @@ def validate_manifest() -> None:
             fail(f"{package}: expected {expected_version}, found {actual!r}")
 
 
+def validate_lockfile_policy() -> None:
+    path = ROOT / "Packages" / "packages-lock.json"
+    if not path.is_file():
+        print(
+            "::warning file=Packages/packages-lock.json::"
+            "Unity package lock is not source-controlled yet. "
+            "Capture the authoritative lock from the pinned editor before gameplay expands."
+        )
+        return
+
+    try:
+        lock = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f"invalid Packages/packages-lock.json: {exc}")
+
+    dependencies = lock.get("dependencies")
+    if not isinstance(dependencies, dict):
+        fail("Packages/packages-lock.json has no dependencies object")
+
+    for package, expected_version in EXPECTED_PACKAGES.items():
+        entry = dependencies.get(package)
+        if not isinstance(entry, dict):
+            fail(f"packages-lock.json is missing {package}")
+        actual_version = entry.get("version")
+        if actual_version != expected_version:
+            fail(
+                f"packages-lock.json {package}: expected {expected_version}, "
+                f"found {actual_version!r}"
+            )
+
+
 def validate_assets_metadata() -> None:
     assets = ROOT / "Assets"
     if not assets.is_dir():
@@ -266,6 +297,7 @@ def validate_conflict_markers() -> None:
 def main() -> None:
     validate_project_version()
     validate_manifest()
+    validate_lockfile_policy()
     validate_assets_metadata()
     validate_meta_guids()
     validate_assembly_definitions()
