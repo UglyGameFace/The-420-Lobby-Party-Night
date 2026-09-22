@@ -19,6 +19,11 @@ namespace PartyNight.Foundation.Editor
                 ["com.unity.transport"] = "2.7.4",
             };
 
+        public static void PreExport()
+        {
+            Validate();
+        }
+
         public static void Validate()
         {
             if (!string.Equals(Application.unityVersion, RequiredUnityVersion, StringComparison.Ordinal))
