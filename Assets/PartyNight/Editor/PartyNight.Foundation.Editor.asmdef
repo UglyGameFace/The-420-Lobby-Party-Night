@@ -2,7 +2,8 @@
   "name": "PartyNight.Foundation.Editor",
   "rootNamespace": "PartyNight.Foundation.Editor",
   "references": [
-    "PartyNight.Foundation"
+    "PartyNight.Foundation",
+    "Unity.RenderPipelines.Universal.Runtime"
   ],
   "includePlatforms": [
     "Editor"
