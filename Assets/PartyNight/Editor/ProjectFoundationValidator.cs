@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace PartyNight.Foundation.Editor
     public static class ProjectFoundationValidator
     {
         private const string RequiredUnityVersion = "6000.3.24f1";
+        private const string RequiredBuildScene = "Assets/PartyNight/Scenes/PartyNightFoundation.unity";
 
         private static readonly IReadOnlyDictionary<string, string> RequiredPackages =
             new Dictionary<string, string>
@@ -50,6 +52,38 @@ namespace PartyNight.Foundation.Editor
                     throw new InvalidOperationException(
                         $"Package {required.Key} expected {required.Value}, resolved {actualVersion}.");
                 }
+            }
+
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(RequiredBuildScene) == null)
+            {
+                throw new InvalidOperationException($"Required build scene {RequiredBuildScene} could not be imported.");
+            }
+
+            var enabledSceneCount = 0;
+            var requiredSceneEnabled = false;
+            foreach (var scene in EditorBuildSettings.scenes)
+            {
+                if (!scene.enabled)
+                {
+                    continue;
+                }
+
+                enabledSceneCount++;
+                if (string.Equals(scene.path, RequiredBuildScene, StringComparison.Ordinal))
+                {
+                    requiredSceneEnabled = true;
+                }
+            }
+
+            if (!requiredSceneEnabled)
+            {
+                throw new InvalidOperationException($"Required build scene {RequiredBuildScene} is not enabled.");
+            }
+
+            if (enabledSceneCount != 1)
+            {
+                throw new InvalidOperationException(
+                    $"Expected exactly one enabled foundation scene, found {enabledSceneCount}.");
             }
 
             Debug.Log("Party Night Unity foundation validation passed.");
