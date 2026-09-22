@@ -16,16 +16,31 @@ namespace PartyNight.Input
         private readonly InputAction dash;
         private readonly InputAction useItem;
         private readonly InputAction emote;
+        private readonly bool ownsActionAsset;
+        private readonly bool manageActionMapState;
         private bool disposed;
 
         public PartyNightInputReader(InputActionAsset source)
+            : this(source, cloneSource: true, manageActionMapState: true)
+        {
+        }
+
+        private PartyNightInputReader(
+            InputActionAsset source,
+            bool cloneSource,
+            bool manageActionMapState)
         {
             if (source == null)
             {
                 throw new ArgumentNullException(nameof(source));
             }
 
-            actions = UnityEngine.Object.Instantiate(source);
+            ownsActionAsset = cloneSource;
+            this.manageActionMapState = manageActionMapState;
+            actions = cloneSource
+                ? UnityEngine.Object.Instantiate(source)
+                : source;
+
             gameplay = actions.FindActionMap(PartyNightInputNames.GameplayMap, true);
             move = gameplay.FindAction(PartyNightInputNames.Move, true);
             look = gameplay.FindAction(PartyNightInputNames.Look, true);
@@ -48,18 +63,26 @@ namespace PartyNight.Input
                     "Party Night project-wide Input Actions are not assigned.");
             }
 
-            return new PartyNightInputReader(source);
+            // Project-wide actions are already the single preloaded runtime asset.
+            // Borrow it instead of cloning a second always-on action graph.
+            return new PartyNightInputReader(
+                source,
+                cloneSource: false,
+                manageActionMapState: false);
         }
 
         public void Enable()
         {
             ThrowIfDisposed();
-            gameplay.Enable();
+            if (!gameplay.enabled)
+            {
+                gameplay.Enable();
+            }
         }
 
         public void Disable()
         {
-            if (!disposed)
+            if (!disposed && manageActionMapState)
             {
                 gameplay.Disable();
             }
@@ -93,8 +116,17 @@ namespace PartyNight.Input
                 return;
             }
 
-            gameplay.Disable();
+            if (manageActionMapState)
+            {
+                gameplay.Disable();
+            }
+
             disposed = true;
+
+            if (!ownsActionAsset)
+            {
+                return;
+            }
 
 #if UNITY_EDITOR
             if (!Application.isPlaying)

@@ -42,42 +42,77 @@ namespace PartyNight.Gameplay
                     "PartyNightFoundation requires exactly one MainCamera-tagged Camera.");
             }
 
-            runtimeRoot = new GameObject(RuntimeRootName).transform;
-            runtimeRoot.SetParent(transform, false);
+            GameObject newRuntimeRoot = null;
+            GameObject newGround = null;
+            GameObject newLocalPlayer = null;
+            PartyNightOrbitCamera newOrbitCamera = null;
+            PartyNightLocalPlayerController newLocalController = null;
 
-            ground = new GameObject(GroundName);
-            ground.transform.SetParent(runtimeRoot, false);
-            ground.transform.localPosition = new Vector3(0f, -0.5f, 0f);
-            ground.transform.localScale = new Vector3(24f, 1f, 24f);
-            ground.AddComponent<BoxCollider>();
-
-            localPlayer = new GameObject(LocalPlayerName);
-            localPlayer.transform.SetParent(runtimeRoot, false);
-            localPlayer.transform.localPosition = new Vector3(0f, 0.05f, 0f);
-
-            var characterController = localPlayer.AddComponent<CharacterController>();
-            characterController.radius = 0.45f;
-            characterController.height = 1.8f;
-            characterController.center = new Vector3(0f, 0.9f, 0f);
-            characterController.slopeLimit = 50f;
-            characterController.stepOffset = 0.3f;
-            characterController.skinWidth = 0.08f;
-            characterController.minMoveDistance = 0f;
-
-            var motor = localPlayer.AddComponent<PartyNightCharacterMotor>();
-
-            orbitCamera = sceneCamera.GetComponent<PartyNightOrbitCamera>();
-            if (orbitCamera == null)
+            try
             {
-                orbitCamera = sceneCamera.gameObject.AddComponent<PartyNightOrbitCamera>();
+                newRuntimeRoot = new GameObject(RuntimeRootName);
+                newRuntimeRoot.transform.SetParent(transform, false);
+
+                newGround = new GameObject(GroundName);
+                newGround.transform.SetParent(newRuntimeRoot.transform, false);
+                newGround.transform.localPosition = new Vector3(0f, -0.5f, 0f);
+                newGround.transform.localScale = new Vector3(24f, 1f, 24f);
+                newGround.AddComponent<BoxCollider>();
+
+                newLocalPlayer = new GameObject(LocalPlayerName);
+                newLocalPlayer.transform.SetParent(newRuntimeRoot.transform, false);
+                newLocalPlayer.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+
+                var characterController =
+                    newLocalPlayer.AddComponent<CharacterController>();
+                characterController.radius = 0.45f;
+                characterController.height = 1.8f;
+                characterController.center = new Vector3(0f, 0.9f, 0f);
+                characterController.slopeLimit = 50f;
+                characterController.stepOffset = 0.3f;
+                characterController.skinWidth = 0.08f;
+                characterController.minMoveDistance = 0f;
+
+                var motor =
+                    newLocalPlayer.AddComponent<PartyNightCharacterMotor>();
+
+                newOrbitCamera =
+                    sceneCamera.GetComponent<PartyNightOrbitCamera>();
+                if (newOrbitCamera == null)
+                {
+                    newOrbitCamera =
+                        sceneCamera.gameObject.AddComponent<PartyNightOrbitCamera>();
+                }
+
+                newOrbitCamera.Initialize(newLocalPlayer.transform);
+
+                newLocalController =
+                    newLocalPlayer.AddComponent<PartyNightLocalPlayerController>();
+                newLocalController.Initialize(motor, newOrbitCamera);
+
+                Physics.SyncTransforms();
+
+                runtimeRoot = newRuntimeRoot.transform;
+                ground = newGround;
+                localPlayer = newLocalPlayer;
+                orbitCamera = newOrbitCamera;
+                localController = newLocalController;
             }
+            catch
+            {
+                if (newRuntimeRoot != null)
+                {
+                    Destroy(newRuntimeRoot);
+                }
 
-            orbitCamera.Initialize(localPlayer.transform);
+                if (newOrbitCamera != null &&
+                    newOrbitCamera.gameObject == sceneCamera.gameObject)
+                {
+                    Destroy(newOrbitCamera);
+                }
 
-            localController = localPlayer.AddComponent<PartyNightLocalPlayerController>();
-            localController.Initialize(motor, orbitCamera);
-
-            Physics.SyncTransforms();
+                throw;
+            }
         }
 
         private Camera FindSceneMainCamera()

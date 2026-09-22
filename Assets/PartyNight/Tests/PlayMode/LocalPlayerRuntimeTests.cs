@@ -10,14 +10,28 @@ namespace PartyNight.Gameplay.Tests
 {
     public sealed class LocalPlayerRuntimeTests
     {
-        private const string FoundationSceneName = "PartyNightFoundation";
+        private const string FoundationScenePath =
+            "Assets/PartyNight/Scenes/PartyNightFoundation.unity";
         private Scene loadedScene;
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            var existing = SceneManager.GetSceneByPath(FoundationScenePath);
+            if (existing.IsValid() && existing.isLoaded)
+            {
+                var existingUnload = SceneManager.UnloadSceneAsync(existing);
+                if (existingUnload != null)
+                {
+                    while (!existingUnload.isDone)
+                    {
+                        yield return null;
+                    }
+                }
+            }
+
             var load = SceneManager.LoadSceneAsync(
-                FoundationSceneName,
+                FoundationScenePath,
                 LoadSceneMode.Additive);
 
             Assert.That(load, Is.Not.Null);
@@ -26,7 +40,7 @@ namespace PartyNight.Gameplay.Tests
                 yield return null;
             }
 
-            loadedScene = SceneManager.GetSceneByName(FoundationSceneName);
+            loadedScene = SceneManager.GetSceneByPath(FoundationScenePath);
             Assert.That(loadedScene.IsValid(), Is.True);
             Assert.That(loadedScene.isLoaded, Is.True);
 

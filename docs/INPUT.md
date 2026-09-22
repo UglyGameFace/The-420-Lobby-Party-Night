@@ -59,7 +59,7 @@ Final visual sizing, safe areas and ergonomics remain a separate mobile UI task 
 
 ## Runtime API
 
-`PartyNightInputReader.CreateFromProjectWideActions()` clones the preloaded project-wide Action Asset into a local reader instance.
+`PartyNightInputReader.CreateFromProjectWideActions()` borrows the single preloaded project-wide Action Asset instead of cloning a second always-on action graph. Standalone readers created explicitly from an asset still own an isolated clone for tests or future per-player use.
 
 `PartyNightInputFrame` contains:
 - Move;

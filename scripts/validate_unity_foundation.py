@@ -526,6 +526,10 @@ def validate_gameplay_foundation() -> None:
     )
     if "CreateFromProjectWideActions" not in input_reader:
         fail("PartyNightInputReader must consume the assigned project-wide actions")
+    if "cloneSource: false" not in input_reader:
+        fail("PartyNightInputReader must borrow the project-wide Action Asset without cloning it")
+    if "manageActionMapState: false" not in input_reader:
+        fail("project-wide input reader must not disable or destroy the shared Action Asset")
     if "device is Pointer" not in input_reader:
         fail("PartyNightInputReader must classify pointer delta look separately")
 

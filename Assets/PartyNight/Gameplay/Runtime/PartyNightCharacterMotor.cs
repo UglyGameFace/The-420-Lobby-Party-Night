@@ -38,6 +38,12 @@ namespace PartyNight.Gameplay
         private void Awake()
         {
             characterController = GetComponent<CharacterController>();
+
+            if (gravity >= 0f)
+            {
+                throw new System.InvalidOperationException(
+                    "Party Night character gravity must be negative.");
+            }
         }
 
         public void Tick(Vector3 desiredWorldMove, bool jumpPressed, float deltaTime)
