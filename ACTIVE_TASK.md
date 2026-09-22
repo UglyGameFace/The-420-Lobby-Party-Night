@@ -1,160 +1,112 @@
 # ACTIVE TASK
 
+## Active task / outcome
+
+Create the first **real buildable Unity scene** for **The 420 Lobby: Party Night** and remove the exact Player-export blocker proven by Unity Build Automation build #1.
+
+Outcome:
+- commit a real Unity scene rather than fabricating one only inside CI;
+- configure that scene as the enabled Player build scene;
+- validate the scene through Unity 6000.3.24f1;
+- keep the scene intentionally foundation-only, with no Hotbox Havoc gameplay;
+- preserve the no-stale-code rule.
+
+## Scope
+
+Included:
+- Party Night repository only;
+- one source-controlled foundation scene;
+- Main Camera and Directional Light only;
+- Unity build-scene configuration;
+- scene/build-settings static validation;
+- Edit Mode regression coverage for build-scene configuration;
+- pre-export validation of the configured scene;
+- exact-head GitHub and Unity Build Automation validation.
+
+Excluded:
+- Hotbox Havoc gameplay;
+- player movement;
+- character models;
+- arena art;
+- URP pipeline asset tuning;
+- Input Actions;
+- networking;
+- Discord/backend integration;
+- changes to any other repository.
+
 ## Status
 
-**COMPLETE — POST-MERGE VERIFIED**
+**IMPLEMENTATION**
 
-The Unity project foundation task is closed.
+Working branch:
+`foundation/first-buildable-scene`
 
-## Completed outcome
+## Root cause
 
-The repository now contains a real, pinned, cloud-validated Unity foundation for **The 420 Lobby: Party Night**.
+Unity Build Automation build #1 validated the previous foundation successfully through package resolution, script compilation, Edit Mode tests, and the Party Night pre-export validator.
 
-Completed:
-- Unity Editor pinned to `6000.3.24f1` / changeset `4e7b9b5b6244`;
-- URP `17.3.0`;
-- Input System `1.20.0`;
-- Netcode for GameObjects `2.13.2`;
-- Unity Transport `2.7.4`;
-- Unity Test Framework `1.6.0`;
-- source-controlled Party Night runtime/editor/test assembly boundaries;
-- Unity `.meta` coverage for tracked `Assets/` content;
-- Edit Mode smoke test;
-- Unity Build Automation pre-export validator;
-- phone-only Unity Build Automation workflow;
-- GitHub static validation workflow;
-- stale/superseded artifact rejection;
-- dependency/license/setup documentation.
-
-No gameplay, scene, prefab, character model, Input Actions, network gameplay, Discord integration, or backend implementation was introduced by this task.
-
-## Unity Build Automation evidence
-
-Unity Build Automation build #1 ran on exact PR head:
-
-`3d8e5453cce2c0b8498f94b76aaa6aee9a9c61ec`
-
-Validated:
-- repository checkout succeeded;
-- Unity auto-detected `6000.3.24f1`;
-- exact editor changeset `4e7b9b5b6244` launched;
-- package resolution completed;
-- the expected pinned foundation packages resolved;
-- script compilation completed successfully;
-- Edit Mode tests completed with exit code 0;
-- `PartyNight.Foundation.Editor.ProjectFoundationValidator.PreExport` executed;
-- foundation validator reported success.
-
-The overall cloud build was marked failed only at Player export because this foundation intentionally contains no configured build scene.
-
-Exact export failure:
+The Player export then failed because no build scene existed:
 
 `ERROR: There were no scenes configured to build!`
 
-That failure is outside this task's scope because scenes were explicitly excluded. No fake scene was added merely to produce a green export.
+This task fixes that exact blocker and nothing unrelated.
 
-## Repository/static validation
+## Architecture
 
-PR #2 exact validated head:
-`3d8e5453cce2c0b8498f94b76aaa6aee9a9c61ec`
+The source-controlled scene is:
+`Assets/PartyNight/Scenes/PartyNightFoundation.unity`
 
-GitHub static workflow:
-- run #9 passed on the exact validated PR head;
-- branch was 0 commits behind `main`;
-- PR was mergeable;
-- changed files were limited to Unity foundation/docs/CI scope;
-- generated Unity directories were absent;
-- stale/superseded artifact checks passed.
+It is enabled through:
+`ProjectSettings/EditorBuildSettings.asset`
 
-## Merge
+The scene contains only foundational rendering objects:
+- Main Camera;
+- Audio Listener;
+- Directional Light;
+- URP additional camera/light metadata compatible with the installed URP package.
 
-PR: #2
+No temporary runtime scene generator is used. No CI-only fake scene is used.
 
-Title:
-`Create pinned Unity project foundation`
+## Validation plan
 
-Validated PR head:
-`3d8e5453cce2c0b8498f94b76aaa6aee9a9c61ec`
+Required before merge:
+- static validator confirms scene and metadata exist;
+- static validator confirms `EditorBuildSettings.asset` enables exactly the intended foundation scene;
+- Unity imports the scene;
+- Party Night scripts compile;
+- Edit Mode regression test confirms the scene asset exists and is enabled;
+- pre-export validator confirms the scene is configured;
+- Linux Player export proceeds beyond the previous "no scenes configured" failure;
+- exact-head GitHub static workflow passes;
+- final diff and stale-artifact review pass.
 
-Merge method:
-squash
+## Cleanup rule
 
-Squash merge commit:
-`42e05a03dcf64f0d63753db9cabd0ebf70f72929`
+No superseded, obsolete, duplicate, temporary, debug, backup, or abandoned implementation may remain when this task closes.
 
-PR state:
-merged
-
-Post-merge comparison confirmed `main` contains the expected foundation diff from the previous main head.
-
-## Cleanup
-
-Hard project rule remains:
-
-No superseded, obsolete, duplicate, temporary, debug, backup, compatibility, or abandoned implementation may remain in an affected area when a task closes.
-
-Verified for this task:
-- no backup copies;
-- no `.old`, `.bak`, `.orig`, `.rej`, or temporary artifacts;
-- no legacy/deprecated/obsolete duplicate directories;
-- no generated Unity directories;
-- no fake package lock file;
-- no unrelated project code;
-- no fake serialized scene/prefab/URP assets.
-
-## Architecture state
-
-The foundation now proves that the selected Unity/package stack can open, resolve, compile, and execute editor tests in the phone-only cloud workflow.
-
-Not yet implemented:
-- URP renderer/pipeline assets;
-- real Unity scene;
-- Input Actions;
-- player controller;
-- camera;
-- touch controls;
-- gameplay;
-- multiplayer objects;
-- Web/mobile runtime validation.
-
-## Backlog
-
-Not active:
-- create the first real Unity scene and URP project assets;
-- create the abstract input action layer;
-- implement local movement/controller;
-- create the local Hotbox Havoc prototype;
-- evaluate/import a polished modular character base while explicitly avoiding blocky/Roblox-like character art;
-- authoritative multiplayer;
-- lobby/round lifecycle;
-- Web/mobile validation;
-- performance profiling;
-- persistent services;
-- Discord integration;
-- additional minigames.
+In particular, this task will not add:
+- scene generator scripts that become unnecessary after export;
+- backup copies of scene/build settings;
+- duplicate scene ownership;
+- old disabled foundation scenes.
 
 ## Git state
 
 Repository:
 `UglyGameFace/The-420-Lobby-Party-Night`
 
-Default branch:
+Base/default branch:
 `main`
 
-Completed task branch:
-`foundation/unity-project`
+Verified base head:
+`f0677c0ec3012006f629aa28d7b5e82d0617837c`
 
-Validated PR head:
-`3d8e5453cce2c0b8498f94b76aaa6aee9a9c61ec`
+Working branch:
+`foundation/first-buildable-scene`
 
 PR:
-#2
-
-Squash merge:
-`42e05a03dcf64f0d63753db9cabd0ebf70f72929`
-
-The exact post-closeout `main` head is verified externally after this bookkeeping commit because a commit cannot contain its own resulting SHA.
+not opened yet.
 
 ## Next step
 
-Start a new single active task for the **first real Unity scene + URP project assets + abstract input foundation**, without starting Hotbox Havoc gameplay logic until that shared scene/input base is validated.
+Commit the real foundation scene and build settings, extend regression validation, then open a draft PR and run Unity Build Automation against this branch.
