@@ -360,19 +360,23 @@ namespace PartyNight.Foundation.Editor
             builder.AppendLine($"Files: {copied.Count}");
             builder.AppendLine();
 
-            using var sha256 = SHA256.Create();
-
-            foreach (var relativePath in copied)
+            using (var sha256 = SHA256.Create())
             {
-                var fullPath = Path.Combine(
-                    captureRoot,
-                    relativePath.Replace('/', Path.DirectorySeparatorChar));
+                foreach (var relativePath in copied)
+                {
+                    var fullPath = Path.Combine(
+                        captureRoot,
+                        relativePath.Replace('/', Path.DirectorySeparatorChar));
 
-                using var stream = File.OpenRead(fullPath);
-                var hash = sha256.ComputeHash(stream);
-                builder.Append(Convert.ToHexString(hash).ToLowerInvariant());
-                builder.Append("  ");
-                builder.AppendLine(relativePath);
+                    using (var stream = File.OpenRead(fullPath))
+                    {
+                        var hash = sha256.ComputeHash(stream);
+                        builder.Append(BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant());
+                    }
+
+                    builder.Append("  ");
+                    builder.AppendLine(relativePath);
+                }
             }
 
             File.WriteAllText(
