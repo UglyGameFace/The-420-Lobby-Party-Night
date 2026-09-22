@@ -582,6 +582,34 @@ def validate_gameplay_foundation() -> None:
     if playmode_asm.get("includePlatforms") != []:
         fail("PlayMode test assembly must not be Editor-only")
 
+    local_player_tests = read_required(
+        "Assets/PartyNight/Tests/PlayMode/LocalPlayerRuntimeTests.cs"
+    )
+    jump_signature = (
+        "[UnityTest]\n"
+        "        public IEnumerator JumpUsesExplicitGravityAndReturnsToGround()"
+    )
+    if jump_signature not in local_player_tests:
+        fail(
+            "jump grounding regression test must run as a UnityTest across real frames"
+        )
+    jump_start = local_player_tests.index(jump_signature)
+    jump_end = local_player_tests.find(
+        "        [", jump_start + len(jump_signature)
+    )
+    jump_body = (
+        local_player_tests[jump_start:]
+        if jump_end < 0
+        else local_player_tests[jump_start:jump_end]
+    )
+    if jump_body.count("yield return null;") < 3:
+        fail(
+            "jump grounding regression test must advance Unity frames while settling, "
+            "jumping and landing"
+        )
+    if "PARTY_NIGHT_TEST_RESULT" not in local_player_tests:
+        fail("PlayMode tests must emit durable cloud result diagnostics")
+
     composition_meta = read_required(
         "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs.meta"
     )
