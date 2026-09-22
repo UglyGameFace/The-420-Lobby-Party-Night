@@ -630,8 +630,8 @@ def validate_hotbox_havoc_prototype() -> None:
         fail("visual artifact exporter must bind evidence to BUILD_REVISION")
     if "ValidateCurrentCloudCapture" not in exporter:
         fail("visual artifact exporter must validate evidence before Player export")
-    if "HotboxHavoc_Overview.json" not in exporter:
-        fail("visual artifact exporter must copy exact-revision evidence manifest")
+    if "HotboxHavocPrototype.VisualCaptureManifestRelativePath" not in exporter:
+        fail("visual artifact exporter must copy the centralized exact-revision evidence manifest")
 
     project_validator = read_required(
         "Assets/PartyNight/Editor/ProjectFoundationValidator.cs"
