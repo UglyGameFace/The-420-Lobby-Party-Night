@@ -39,29 +39,31 @@ Excluded:
 
 ## Status
 
-**IMPLEMENTATION**
+**VALIDATION**
 
-Working branch: `foundation/unity-project`.
+Implementation is present on `foundation/unity-project`. Unity Editor execution remains unvalidated until an editor/license-capable runner is available.
 
 ## Findings / root cause
 
 The previous bootstrap task was post-merge verified and left no Unity project files.
 
 Current upstream research on 2026-09-21 established:
-- Unity `6000.3.24f1` is the latest verified 6.3 LTS patch found before this task began, released 2026-09-10;
+- Unity `6000.3.24f1` is the latest verified 6.3 LTS patch found before implementation, released 2026-09-10;
 - its changeset is `4e7b9b5b6244`;
 - Unity 6.3 uses URP `17.3.0`;
 - Input System `1.20.0` is in the Unity 6.3 patch stream;
 - Netcode for GameObjects `2.13.2` is updated in Unity `6000.3.24f1`;
 - Unity Transport `2.7.4` is in the Unity 6.3 patch stream;
-- the official Unity packages selected here are Unity-dependent packages under Unity's Companion License family, with package-specific third-party notices where applicable.
+- the selected official Unity packages are intended for Unity-dependent projects and use Unity package licensing/third-party notices that must be retained and reviewed at release.
+
+Unity project settings such as `ProjectSettings.asset`, URP renderer assets, and Input Action assets are intentionally not fabricated by hand. Unity can regenerate missing project settings on editor open; generated serialized settings must then be reviewed and source-controlled from the pinned editor.
 
 ## Execution path
 
-For this task the relevant project bootstrap path is:
+For this task:
 
 ```text
-ProjectVersion.txt
+ProjectSettings/ProjectVersion.txt
   -> Unity Editor version selection
 Packages/manifest.json
   -> Unity Package Manager resolution
@@ -81,55 +83,86 @@ Gameplay execution does not exist yet.
 
 Pinned foundation:
 - Unity Editor: `6000.3.24f1`
+- editor changeset: `4e7b9b5b6244`
 - URP: `17.3.0`
 - Input System: `1.20.0`
 - Netcode for GameObjects: `2.13.2`
 - Unity Transport: `2.7.4`
 - Unity Test Framework: `1.6.0`
 
-The package presence does not mean networking or input gameplay has been implemented.
+Package presence does not mean networking or input gameplay has been implemented.
 
-URP renderer assets, actual Input Actions, scenes, prefabs, and multiplayer objects are intentionally excluded until they can be created and validated with the Unity Editor rather than hand-authoring serialized Unity assets blindly.
+URP renderer assets, actual Input Actions, scenes, prefabs, build profiles, and multiplayer objects remain excluded until created through the pinned Unity Editor.
 
 ## Changes
 
-Implementation in progress.
+Implemented on the task branch:
+- pinned `ProjectSettings/ProjectVersion.txt`;
+- pinned `Packages/manifest.json`;
+- created `PartyNight.Foundation` runtime assembly;
+- created immutable project identity constants for the product name and 12–16 player initial match range;
+- created an Edit Mode smoke test assembly/test;
+- created an Editor-only foundation validator for exact editor/package resolution;
+- tracked Unity `.meta` files for all new `Assets/` content and folders;
+- added `scripts/validate_unity_foundation.py`;
+- added GitHub static validation workflow;
+- added dependency/license evidence documentation;
+- added Unity setup/validation documentation;
+- updated README foundation status.
+
+No gameplay, scene, prefab, art, model, external service, or other-project code was added.
 
 ## Validation
 
-Planned:
-- parse and verify project version;
-- parse and verify package manifest exact pins;
-- verify required project files and Unity `.meta` files;
-- reject tracked Unity generated folders;
-- validate static checks in GitHub Actions;
-- inspect exact PR diff/head;
-- inspect CI/status checks;
-- run Unity batch-mode validation and Edit Mode test when a Unity 6000.3.24f1 editor/license-capable runner is available.
+Completed:
+- branch compared against `main`: 0 behind;
+- changed-file list inspected and limited to the expected Unity-foundation/docs/CI files;
+- exact `ProjectVersion.txt` content fetched from the branch and verified;
+- `Packages/manifest.json` fetched, parsed, and exact pins verified;
+- all three assembly definition JSON files fetched and structurally inspected;
+- Python validator fetched and syntax-compiled successfully;
+- branch file list checked for required Unity `.meta` pairings;
+- no `Library/`, `Temp/`, `Obj/`, `Logs/`, `UserSettings/`, `Build/`, or `Builds/` content appears in the branch diff;
+- no scene/prefab/binary asset was introduced;
+- Unity package/editor pins checked against current upstream evidence.
 
-Do not report Unity compilation, package resolution, URP activation, or Edit Mode test success until Unity actually runs.
+Still required:
+- open draft PR;
+- let GitHub static workflow execute on the PR;
+- inspect exact PR head/diff/status;
+- run Unity 6000.3.24f1 package resolution, script compilation, editor validator, and Edit Mode test on an editor/license-capable runner;
+- review generated `packages-lock.json` and serialized ProjectSettings before merging.
+
+A successful static check is not a Unity compile.
 
 ## Cleanup
 
-No temporary/debug code is intended.
+- no temporary/debug scripts;
+- no generated Unity directories;
+- no fake `packages-lock.json`;
+- no hand-authored scene/prefab/URP asset;
+- no unrelated repository changes.
 
 ## Conflicts
 
-No competing Unity project, runtime assembly, input system, networking manager, scene architecture, or gameplay implementation exists in this repository.
+No competing Unity project, runtime assembly, input system owner, network manager, scene architecture, or gameplay implementation exists.
 
 ## Blockers / risks
 
-Potential validation blocker:
-- this connected execution environment does not currently expose an installed/licensed Unity Editor. If GitHub CI also lacks Unity licensing, editor compile/test validation will remain explicitly blocked rather than fabricated.
+Current hard validation blocker:
+- this execution environment does not provide a reachable installed/licensed Unity Editor, so authoritative Unity package resolution/compilation/test execution cannot be performed here.
 
-Repository visibility remains public.
+Additional risks:
+- the first real editor open will generate additional ProjectSettings and `packages-lock.json`; those files must be inspected before merge;
+- Web transport behavior is not validated by package installation;
+- repository visibility remains public.
 
 ## Backlog
 
 Not active:
-- evaluate/import a polished modular character base, including the ithappy packs discussed with the user; no Roblox/block-character visual direction;
+- evaluate/import a polished modular character base, including the ithappy packs discussed with the user; explicitly avoid blocky/Roblox-like character art;
 - create URP renderer/pipeline assets in Unity;
-- activate/configure the Input System and create abstract action maps;
+- activate/configure Input System and create abstract action maps;
 - local movement/controller;
 - Hotbox Havoc local prototype;
 - authoritative multiplayer;
@@ -150,10 +183,12 @@ Base head: `8af5aad9ea96168bf790cc7d456cc77a559e21de`
 
 Working branch: `foundation/unity-project`
 
+Last implementation head before this task-record update: `89e7e2015c94a013a17329833567670b80379059`
+
 PR: not opened yet.
 
 Merge status: not merged.
 
 ## Next step
 
-Create the pinned Unity project files, assembly/test boundaries, validation scripts/workflow, and dependency record; then validate the resulting branch before opening a PR.
+Open a draft PR, inspect the resulting exact head and GitHub static check, then keep the PR unmerged until the pinned Unity Editor has generated/resolved the remaining authoritative project files and passed compilation/tests.
