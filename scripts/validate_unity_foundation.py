@@ -19,6 +19,27 @@ EXPECTED_GLOBAL_SETTINGS_GUID = "1858f607251d94a518662b55b78f6619"
 EXPECTED_VOLUME_PROFILE_ASSET = "Assets/PartyNight/Settings/PartyNightDefaultVolumeProfile.asset"
 EXPECTED_VOLUME_PROFILE_GUID = "c55b34362de09465f8a9b944f73c290e"
 EXPECTED_SETTINGS_FOLDER_GUID = "6235a995f08434dfc81e53495c5c2027"
+EXPECTED_INPUT_ACTION_ASSET = "Assets/PartyNight/Input/PartyNightInputActions.inputactions"
+EXPECTED_INPUT_ACTIONS = {
+    "Move": ("Value", "Vector2"),
+    "Look": ("Value", "Vector2"),
+    "Jump": ("Button", "Button"),
+    "Interact": ("Button", "Button"),
+    "Grab": ("Button", "Button"),
+    "Dash": ("Button", "Button"),
+    "UseItem": ("Button", "Button"),
+    "Emote": ("Button", "Button"),
+}
+EXPECTED_GAMEPAD_BINDINGS = {
+    "Move": "<Gamepad>/leftStick",
+    "Look": "<Gamepad>/rightStick",
+    "Jump": "<Gamepad>/buttonSouth",
+    "Interact": "<Gamepad>/buttonWest",
+    "Grab": "<Gamepad>/leftShoulder",
+    "Dash": "<Gamepad>/rightShoulder",
+    "UseItem": "<Gamepad>/rightTrigger",
+    "Emote": "<Gamepad>/dpad/up",
+}
 
 EXPECTED_PACKAGES = {
     "com.unity.inputsystem": "1.20.0",
@@ -57,6 +78,7 @@ TEXT_SUFFIXES = {
     ".asset",
     ".asmdef",
     ".cs",
+    ".inputactions",
     ".json",
     ".md",
     ".meta",
@@ -302,6 +324,120 @@ def validate_render_pipeline_assembly_references() -> None:
         )
 
 
+def validate_input_foundation() -> None:
+    project = read_required("ProjectSettings/ProjectSettings.asset")
+    if "  activeInputHandler: 1" not in project:
+        fail("Active Input Handling must be Input System Package (New) only")
+
+    asset_path = ROOT / EXPECTED_INPUT_ACTION_ASSET
+    if not asset_path.is_file():
+        fail(f"missing {EXPECTED_INPUT_ACTION_ASSET}")
+
+    try:
+        asset = json.loads(asset_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f"invalid input actions JSON: {exc}")
+
+    if asset.get("name") != "PartyNightInputActions":
+        fail("input actions asset has unexpected name")
+
+    maps = asset.get("maps")
+    if not isinstance(maps, list) or len(maps) != 1 or maps[0].get("name") != "Gameplay":
+        fail("input actions asset must contain exactly one Gameplay map")
+
+    gameplay = maps[0]
+    actions = gameplay.get("actions")
+    if not isinstance(actions, list):
+        fail("Gameplay actions must be a list")
+
+    actual_actions = {action.get("name"): action for action in actions}
+    if set(actual_actions) != set(EXPECTED_INPUT_ACTIONS):
+        fail("Gameplay action set does not match Party Night input contract")
+
+    for name, (expected_type, expected_control) in EXPECTED_INPUT_ACTIONS.items():
+        action = actual_actions[name]
+        if action.get("type") != expected_type:
+            fail(f"{name}: expected action type {expected_type}")
+        if action.get("expectedControlType") != expected_control:
+            fail(f"{name}: expected control type {expected_control}")
+
+    bindings = gameplay.get("bindings")
+    if not isinstance(bindings, list):
+        fail("Gameplay bindings must be a list")
+
+    def has_binding(action_name: str, path: str, group: str) -> bool:
+        return any(
+            binding.get("action") == action_name
+            and binding.get("path") == path
+            and group in str(binding.get("groups", "")).split(";")
+            for binding in bindings
+        )
+
+    required_keyboard_mouse = {
+        ("Move", "<Keyboard>/w"),
+        ("Move", "<Keyboard>/s"),
+        ("Move", "<Keyboard>/a"),
+        ("Move", "<Keyboard>/d"),
+        ("Look", "<Mouse>/delta"),
+        ("Jump", "<Keyboard>/space"),
+        ("Interact", "<Keyboard>/e"),
+        ("Grab", "<Keyboard>/f"),
+        ("Dash", "<Keyboard>/leftShift"),
+        ("UseItem", "<Mouse>/leftButton"),
+        ("Emote", "<Keyboard>/g"),
+    }
+    for action_name, path in sorted(required_keyboard_mouse):
+        if not has_binding(action_name, path, "KeyboardMouse"):
+            fail(f"{action_name} missing KeyboardMouse binding {path}")
+
+    for action_name, path in EXPECTED_GAMEPAD_BINDINGS.items():
+        if not has_binding(action_name, path, "Gamepad"):
+            fail(f"{action_name} missing Gamepad binding {path}")
+
+    schemes = asset.get("controlSchemes")
+    if not isinstance(schemes, list):
+        fail("input control schemes must be a list")
+
+    scheme_groups = {scheme.get("name"): scheme.get("bindingGroup") for scheme in schemes}
+    if scheme_groups != {"KeyboardMouse": "KeyboardMouse", "Gamepad": "Gamepad"}:
+        fail("input control schemes must be exactly KeyboardMouse and Gamepad")
+
+    scheme_devices = {
+        scheme.get("name"): [device.get("devicePath") for device in scheme.get("devices", [])]
+        for scheme in schemes
+    }
+    if scheme_devices.get("KeyboardMouse") != ["<Keyboard>", "<Mouse>"]:
+        fail("KeyboardMouse scheme must require Keyboard and Mouse")
+    if scheme_devices.get("Gamepad") != ["<Gamepad>"]:
+        fail("Gamepad scheme must require the generic Gamepad layout")
+
+    input_meta = read_required(EXPECTED_INPUT_ACTION_ASSET + ".meta")
+    if "guid: ad5fffad5d744af6939605235845fa84" not in input_meta:
+        fail("input actions asset GUID changed unexpectedly")
+    if "guid: 8404be70184654265930450def6a9037" not in input_meta:
+        fail("input actions asset is not using Unity Input System's InputAction importer")
+    if "generateWrapperCode: 0" not in input_meta:
+        fail("generated Input Action wrapper code must remain disabled")
+
+    input_asm = json.loads(read_required("Assets/PartyNight/Input/Runtime/PartyNight.Input.asmdef"))
+    if "Unity.InputSystem" not in input_asm.get("references", []):
+        fail("PartyNight.Input must reference Unity.InputSystem")
+    if "ENABLE_INPUT_SYSTEM" not in input_asm.get("defineConstraints", []):
+        fail("PartyNight.Input must require ENABLE_INPUT_SYSTEM")
+
+    editor_asm = json.loads(read_required("Assets/PartyNight/Editor/PartyNight.Foundation.Editor.asmdef"))
+    editor_refs = set(editor_asm.get("references", []))
+    for required in ("PartyNight.Input", "Unity.InputSystem"):
+        if required not in editor_refs:
+            fail(f"PartyNight.Foundation.Editor missing input reference {required}")
+
+    test_asm = json.loads(read_required("Assets/PartyNight/Tests/EditMode/PartyNight.Foundation.EditModeTests.asmdef"))
+    test_refs = set(test_asm.get("references", []))
+    for required in ("PartyNight.Input", "Unity.InputSystem"):
+        if required not in test_refs:
+            fail(f"EditMode tests missing input reference {required}")
+
+
 def validate_capture_cleanup() -> None:
     forbidden = (
         "Assets/PartyNight/Editor/AuthoritativeSettingsBootstrap.cs",
@@ -409,6 +545,7 @@ def main() -> None:
     validate_assembly_definitions()
     validate_authoritative_project_settings()
     validate_render_pipeline_assembly_references()
+    validate_input_foundation()
     validate_capture_cleanup()
     validate_build_scene()
     validate_csharp_namespace_hygiene()
