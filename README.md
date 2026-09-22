@@ -38,11 +38,21 @@ Validated project pin:
 - Unity Transport 2.7.4
 - Unity Test Framework 1.6.0
 
-Unity Build Automation has opened the project on the pinned editor, resolved the package graph, compiled Party Night scripts, passed the Edit Mode tests, passed the pre-export foundation validator, imported the real Party Night foundation scene, and successfully exported a Linux Player build.
+Unity Build Automation has opened the project on the pinned editor, resolved the package graph, compiled Party Night scripts, passed Edit Mode and Play Mode tests, passed the pre-export foundation/gameplay validators, imported the real Party Night foundation scene, and successfully exported a Linux Player build.
 
-The first real source-controlled scene now lives at `Assets/PartyNight/Scenes/PartyNightFoundation.unity` and is owned by `ProjectSettings/EditorBuildSettings.asset`.
+The first real source-controlled scene lives at `Assets/PartyNight/Scenes/PartyNightFoundation.unity` and is owned by `ProjectSettings/EditorBuildSettings.asset`.
 
-See `docs/UNITY_SETUP.md`, `docs/UNITY_CLOUD_VALIDATION.md`, and `docs/DEPENDENCIES.md`.
+The project now also has:
+- one shared cross-platform Input System action layer;
+- native generic Gamepad bindings;
+- mobile on-screen-control paths that feed the same logical actions;
+- a CharacterController-based local movement motor;
+- explicit jump/gravity;
+- camera-relative movement;
+- a third-person orbit camera;
+- real Play Mode runtime coverage.
+
+See `docs/UNITY_SETUP.md`, `docs/UNITY_CLOUD_VALIDATION.md`, `docs/DEPENDENCIES.md`, and `docs/INPUT.md`.
 
 ## Supported platform families
 
@@ -73,8 +83,8 @@ Closed consoles are explicitly out of scope.
 
 ## Status
 
-Repository bootstrap, the shared Unity project foundation, and the first real buildable Unity scene are complete and post-merge verified.
+Repository bootstrap, shared Unity foundation, the first buildable scene, authoritative project settings/URP activation, cross-platform Input Action foundation, and local player movement + third-person camera foundation are complete and post-merge verified.
 
-No Hotbox Havoc gameplay implementation has been validated yet.
+No Hotbox Havoc gameplay loop has been validated yet.
 
-The authoritative Unity project settings, deterministic package lock, URP activation, and cross-platform Input Action foundation are complete. The current focused task is the first local player movement + third-person camera runtime foundation with Play Mode validation.
+The next focused implementation task is the **local Hotbox Havoc prototype**, built on the validated input/movement/camera runtime foundation.

@@ -1,157 +1,130 @@
 # ACTIVE TASK
 
-## Active task
+## Status
 
-**Local player movement + camera foundation**
+**CLOSED — LOCAL PLAYER MOVEMENT + CAMERA FOUNDATION**
 
-Single active implementation task for Party Night.
+No implementation task is currently active.
 
 Repository:
 `UglyGameFace/The-420-Lobby-Party-Night`
 
-Base:
-`main`
+Merged PR:
+#6 — `Add local player movement and camera foundation`
 
-Base head:
-`7e646167c01f5d2ec9f9414091e208d0fbc4472a`
+Validated PR head:
+`2d40914d0919fd2ac8ffa796c550f5ba4ba8d7a9`
 
-Working branch:
-`foundation/local-player-movement-camera`
+Squash merge on `main`:
+`f395f75ee868a03a9eb83b3e15026de41e2169dc`
 
-State:
-**INVESTIGATION / IMPLEMENTATION**
+## Completed scope
 
-## Outcome
+Party Night now has its first real runtime local-player foundation.
 
-Create the first real runtime local-player foundation without breaking the future authoritative multiplayer architecture.
+Implemented:
+- one canonical `CharacterController` movement motor;
+- explicit gravity and jump behavior;
+- camera-relative movement;
+- third-person orbit camera;
+- `LateUpdate` camera follow behavior;
+- pointer-delta vs Gamepad/touch-stick rate look semantics;
+- project-wide Unity Input System actions;
+- one foundation-scene composition root;
+- invisible engineering ground/collision surface;
+- local runtime input/controller hookup;
+- dedicated gameplay runtime assembly;
+- permanent editor/pre-export gameplay validation;
+- Edit Mode regression coverage;
+- Play Mode runtime coverage.
 
-The task must:
-- consume `PartyNightInputFrame`, not physical device keys;
-- add CharacterController-based local movement;
-- add jump/gravity and camera-relative movement;
-- add a third-person orbit camera;
-- correctly distinguish mouse/pointer delta look from stick/touch look-rate semantics;
-- wire the authoritative Input Action Asset as Unity Input System's project-wide actions so runtime code can use it without Resources duplication or hardcoded asset loading;
-- give the foundation scene one explicit composition root;
-- add real Play Mode runtime tests;
-- keep Discord completely outside the runtime dependency graph.
+## Runtime architecture
 
-## Constraints
+The local player runtime consumes `PartyNightInputFrame`.
 
-- Unity remains pinned to `6000.3.24f1`.
-- Input System remains pinned to `1.20.0`.
-- No Cinemachine package is added just to solve this small foundation.
-- No second input framework.
-- No Rigidbody player-controller rewrite in parallel.
-- No network authority is claimed in this task.
-- Local movement is a client-side foundation/prediction surface only; future authoritative server validation remains mandatory.
-- No Hotbox Havoc mechanics, scoring, grabs/items, networking, matchmaking, Discord integration, or final character art.
-- Closed consoles remain unsupported.
-- No placeholder character model is introduced. The engineering scene may use an invisible collision body until the actual character-art task.
-- No temporary generator, backup, duplicate controller, compatibility shim, or abandoned code may remain when the task closes.
+Gameplay code does not query physical Keyboard, Mouse, Gamepad, or Touchscreen controls directly.
 
-## Research decisions
+The movement stack is:
+- `PartyNightInputReader` -> logical input frame;
+- `PartyNightLocalPlayerController` -> camera-relative intent;
+- `PartyNightCharacterMotor` -> collision-constrained movement;
+- `PartyNightOrbitCamera` -> third-person camera state;
+- `FoundationSceneComposition` -> current foundation-scene composition only.
 
-### Character movement
+This does not make the client authoritative for multiplayer. The future networking task must validate/drive the same movement contract instead of introducing a second unrelated controller.
 
-Use Unity's built-in `CharacterController` for this first movement foundation.
+Discord remains outside input, movement, camera, physics, scene lifecycle, and active-match runtime ownership.
 
-Reason:
-- `CharacterController.Move` provides collision-constrained displacement and collision flags;
-- it does not apply gravity itself, so gravity/jump behavior remains explicit and testable;
-- it avoids committing Party Night's player avatar to uncontrolled Rigidbody authority before the network movement model exists.
+## Final validation
 
-The motor must use one canonical movement implementation. A future networking task may drive/validate the same movement contract rather than creating a second controller.
+GitHub static workflow #50 passed on exact PR head:
 
-### Camera update order
+`2d40914d0919fd2ac8ffa796c550f5ba4ba8d7a9`
 
-The third-person camera updates in `LateUpdate` after movement. This follows Unity's documented use of LateUpdate for follow cameras.
+Unity Build Automation build #8 validated:
+- exact branch/head checkout;
+- Unity import and C# compilation;
+- Edit Mode tests;
+- gameplay/pre-export validators;
+- Linux Player export.
 
-### Look input semantics
+Build #8 did not execute Play Mode tests, so it was not accepted as final runtime validation.
 
-The current `Look` action intentionally combines mouse delta and generic Gamepad right stick.
+Unity Build Automation build #9 validated the same exact head and is the authoritative runtime validation build.
 
-Those values are not the same kind of quantity:
-- pointer delta is accumulated per-update motion in pixels;
-- a gamepad/on-screen stick is a persistent normalized rate-like value.
+Build #9 confirmed:
+- branch `foundation/local-player-movement-camera`;
+- exact revision `2d40914d0919fd2ac8ffa796c550f5ba4ba8d7a9`;
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- Edit Mode launched with `-testPlatform editmode`;
+- Edit Mode completed with exit code 0;
+- Play Mode launched as a separate Unity run;
+- Play Mode used `-testPlatform playmode`;
+- Play Mode completed with exit code 0;
+- committed runtime foundation scene was loaded during the Play Mode suite;
+- gameplay foundation validation passed;
+- pre-export foundation/gameplay validation passed;
+- final Linux Player contains `PartyNight.Gameplay.dll`;
+- Linux Player build completed with `Result: Success`;
+- Unity reported `Finished exporting player successfully`;
+- overall UBA build ended `Finished: SUCCESS`.
 
-The input frame therefore needs an explicit look semantic:
-- `Delta` for pointer/mouse;
-- `Rate` for physical or virtual Gamepad sticks.
+## Post-merge verification
 
-The camera converts them separately so mouse look is not accidentally frame-rate dependent and controller/touch look is not FPS-dependent.
+The squash-merge commit on `main` has the exact same Git tree as the exact Unity-validated PR head:
 
-### Project-wide Input Actions
+`4ef6fb01830242c17f84f75fbce56215882bfbd9`
 
-Unity Input System 1.20 recommends assigning a single Action Asset as project-wide when a project has one shared asset.
+Therefore no implementation content changed during merge.
 
-Party Night will assign its existing `PartyNightInputActions.inputactions` through `EditorBuildSettings` as the project-wide actions. This:
-- preloads the Action Asset in Player builds;
-- exposes it through `InputSystem.actions`;
-- avoids moving the asset into Resources;
-- avoids a duplicate serialized reference or generated wrapper.
+GitHub post-merge static workflow #51 passed on merge commit:
 
-### Scene composition
+`f395f75ee868a03a9eb83b3e15026de41e2169dc`
 
-The existing `PartyNightFoundation` scene gains one explicit `FoundationSceneComposition` MonoBehaviour.
+## Cleanup
 
-It owns only foundation-scene composition:
-- invisible floor collider;
-- local CharacterController player root;
-- local input/controller hookup;
-- orbit camera hookup.
+No temporary movement generator, duplicate controller, Rigidbody fallback, Resources copy of the Input Action Asset, generated input wrapper, compatibility shim, placeholder character model, backup file, or abandoned task-only code remains in the merged implementation.
 
-It is not a network spawner and must not become one.
+## Intentionally deferred
 
-## Validation plan
-
-Before merge:
-1. static CI validates the new gameplay assembly, project-wide Input Action assignment, expected scene composition script, and absence of duplicate movement implementations;
-2. Unity imports/compiles all runtime, editor, Edit Mode and Play Mode assemblies;
-3. existing Edit Mode tests still pass;
-4. Play Mode tests load the real foundation scene;
-5. Play Mode tests prove the runtime composition root creates one player rig;
-6. Play Mode tests prove movement is camera-relative and collision-constrained;
-7. Play Mode tests prove jump/gravity behavior;
-8. Play Mode tests prove mouse delta and Gamepad/touch rate look use different timing semantics;
-9. pre-export validation inspects the committed runtime scene/input wiring;
-10. Linux Player export succeeds on the exact final PR head;
-11. cleanup/diff review passes;
-12. only then may the PR merge;
-13. merged `main` is verified and the task is closed.
-
-## Unity Build Automation requirement
-
-This task is the first runtime GameObject/player-controller milestone.
-
-The existing build target must keep:
-- Edit Mode tests ON;
-- fail build when tests fail ON.
-
-It must now also enable:
-- **Play Mode tests ON**.
-
-Do not run the Unity build until the branch implementation is complete and GitHub static CI is green.
-
-## Out of scope
-
-- final player model/animations;
-- camera collision/occlusion system;
-- aim/lock-on;
-- dash implementation;
+Separate future tasks:
+- final player character model and animation;
+- camera collision/occlusion;
+- dash gameplay;
 - grab/interact/use-item gameplay;
-- touch HUD visuals;
-- safe-area UI;
-- rebinding UI;
-- multiplayer transport or authority;
-- server reconciliation/prediction;
-- Hotbox Havoc rules;
+- final mobile touch HUD and safe-area layout;
+- controller glyph/UI presentation;
+- rebinding/settings UI;
+- authoritative multiplayer movement;
+- prediction/reconciliation;
+- Hotbox Havoc rules and round gameplay;
+- matchmaking/lobby lifecycle;
 - Discord integration.
 
-## Discord boundary
+## Next task candidate
 
-Discord remains an external service/integration surface. No movement, input, camera, scene lifecycle, or active match runtime may depend on Discord availability.
+**Local Hotbox Havoc prototype**
 
-## Next step
+The next implementation should use the validated movement/camera/input foundation to establish the first actual minigame loop locally before networking expands it.
 
-Implement the single gameplay assembly, project-wide input wiring, scene composition root, runtime movement/camera components, validators, and Play Mode tests on this branch.
+Do not begin another implementation until it becomes the single active task.
