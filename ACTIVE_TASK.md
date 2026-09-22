@@ -1,202 +1,130 @@
 # ACTIVE TASK
 
-## Active task / outcome
-
-Create the first real Unity project foundation for **The 420 Lobby: Party Night** without starting gameplay implementation.
-
-Outcome:
-- pin the exact Unity editor patch;
-- pin the initial required Unity packages;
-- establish a minimal source-controlled Unity project layout;
-- establish Party Night runtime/test assembly boundaries;
-- add static repository validation and Unity cloud validation hooks;
-- make Unity Build Automation the authoritative phone-only editor/test validation path;
-- enforce cleanup so no superseded, duplicate, temporary, debug, backup, or abandoned implementation remains in the affected area.
-
-## Scope
-
-Included:
-- Party Night repository only;
-- Unity project metadata;
-- `Packages/manifest.json`;
-- exact editor/package pins;
-- minimal Party Night runtime assembly;
-- minimal Edit Mode smoke test;
-- editor-side foundation validator;
-- GitHub static validation workflow;
-- Unity Build Automation pre-export validation hook;
-- phone-only cloud validation documentation;
-- dependency/license documentation;
-- exact-head PR validation.
-
-Excluded:
-- player movement;
-- Hotbox Havoc mechanics;
-- scenes/prefabs/art/audio;
-- character model imports or purchases;
-- input action maps and touch controls;
-- network gameplay implementation;
-- Discord integration;
-- persistent backend/hosting;
-- modifications to any other repository.
-
 ## Status
 
-**VALIDATION**
+**COMPLETE — POST-MERGE VERIFIED**
 
-Implementation is present on `foundation/unity-project`. Static CI is green. Unity Build Automation is now the authoritative remaining editor/test validation path for the phone-only workflow.
+The Unity project foundation task is closed.
 
-## Findings / root cause
+## Completed outcome
 
-The previous bootstrap task was post-merge verified and left no Unity project files.
-
-Current upstream research on 2026-09-21 established:
-- Unity `6000.3.24f1` is the latest verified 6.3 LTS patch found before implementation, released 2026-09-10;
-- its changeset is `4e7b9b5b6244`;
-- Unity 6.3 uses URP `17.3.0`;
-- Input System `1.20.0` is in the Unity 6.3 patch stream;
-- Netcode for GameObjects `2.13.2` is updated in Unity `6000.3.24f1`;
-- Unity Transport `2.7.4` is in the Unity 6.3 patch stream;
-- the selected official Unity packages are intended for Unity-dependent projects and use Unity package licensing/third-party notices that must be retained and reviewed at release.
-
-Unity project settings such as `ProjectSettings.asset`, URP renderer assets, and Input Action assets are intentionally not fabricated by hand. Unity can regenerate missing project settings on editor open; generated serialized settings must then be reviewed and source-controlled from the pinned editor.
-
-## Execution path
-
-For this task:
-
-```text
-ProjectSettings/ProjectVersion.txt
-  -> Unity Editor version selection
-Packages/manifest.json
-  -> Unity Package Manager resolution
-Assets/PartyNight runtime assembly
-  -> Unity script compilation
-Assets/PartyNight Edit Mode tests
-  -> Unity Test Framework
-Assets/PartyNight Editor validator
-  -> Unity Build Automation pre-export validation after script compilation
-Assets/PartyNight Edit Mode tests
-  -> Unity Build Automation test gate
-GitHub static workflow
-  -> repository structure/version/stale-artifact checks without Unity
-```
-
-Gameplay execution does not exist yet.
-
-## Architecture
-
-Pinned foundation:
-- Unity Editor: `6000.3.24f1`
-- editor changeset: `4e7b9b5b6244`
-- URP: `17.3.0`
-- Input System: `1.20.0`
-- Netcode for GameObjects: `2.13.2`
-- Unity Transport: `2.7.4`
-- Unity Test Framework: `1.6.0`
-
-Package presence does not mean networking or input gameplay has been implemented.
-
-URP renderer assets, actual Input Actions, scenes, prefabs, build profiles, and multiplayer objects remain excluded until created through the pinned Unity Editor.
-
-## Changes
-
-Implemented on the task branch:
-- pinned `ProjectSettings/ProjectVersion.txt`;
-- pinned `Packages/manifest.json`;
-- created `PartyNight.Foundation` runtime assembly;
-- created immutable project identity constants for the product name and 12–16 player initial match range;
-- created an Edit Mode smoke test assembly/test;
-- created an Editor-only foundation validator for exact editor/package resolution;
-- exposed `ProjectFoundationValidator.PreExport` for Unity Build Automation;
-- tracked Unity `.meta` files for all new `Assets/` content and folders;
-- added `scripts/validate_unity_foundation.py`;
-- added GitHub static validation workflow;
-- added dependency/license evidence documentation;
-- added Unity setup/validation documentation;
-- added `docs/UNITY_CLOUD_VALIDATION.md` for the phone-only UBA workflow;
-- extended static validation to reject stale/superseded artifact files and directories;
-- updated README foundation status.
-
-No gameplay, scene, prefab, art, model, external service, or other-project code was added.
-
-## Validation
+The repository now contains a real, pinned, cloud-validated Unity foundation for **The 420 Lobby: Party Night**.
 
 Completed:
-- branch compared against `main`: 0 behind;
-- changed-file list inspected and limited to the expected Unity-foundation/docs/CI files;
-- exact `ProjectVersion.txt` content fetched from the branch and verified;
-- `Packages/manifest.json` fetched, parsed, and exact pins verified;
-- all three assembly definition JSON files fetched and structurally inspected;
-- Python validator fetched and syntax-compiled successfully;
-- branch file list checked for required Unity `.meta` pairings;
-- no `Library/`, `Temp/`, `Obj/`, `Logs/`, `UserSettings/`, `Build/`, or `Builds/` content appears in the branch diff;
-- no scene/prefab/binary asset was introduced;
-- Unity package/editor pins checked against current upstream evidence.
+- Unity Editor pinned to `6000.3.24f1` / changeset `4e7b9b5b6244`;
+- URP `17.3.0`;
+- Input System `1.20.0`;
+- Netcode for GameObjects `2.13.2`;
+- Unity Transport `2.7.4`;
+- Unity Test Framework `1.6.0`;
+- source-controlled Party Night runtime/editor/test assembly boundaries;
+- Unity `.meta` coverage for tracked `Assets/` content;
+- Edit Mode smoke test;
+- Unity Build Automation pre-export validator;
+- phone-only Unity Build Automation workflow;
+- GitHub static validation workflow;
+- stale/superseded artifact rejection;
+- dependency/license/setup documentation.
 
-Completed after PR creation:
-- draft PR #2 opened against `main`;
-- first static workflow run failed because the conflict-marker scanner matched its own literal marker strings;
-- root cause was corrected by constructing the marker strings without embedding literal conflict markers in the validator source;
-- static workflow run #2 passed on exact head `1070af75de1003e7ce53c5b3f10182040802a8c0`;
-- PR remained mergeable after the validator fix.
+No gameplay, scene, prefab, character model, Input Actions, network gameplay, Discord integration, or backend implementation was introduced by this task.
 
-Cloud-path update:
-- Unity Build Automation was selected as the authoritative editor/build validation service because it supports Unity 6000.3 LTS, GitHub-connected builds, pre-export methods, and Edit Mode/Play Mode test gates;
-- GameCI is not the primary path because its current Personal-license setup expects a locally activated Unity license, which conflicts with the phone-only owner workflow;
-- `ProjectFoundationValidator.PreExport` now provides the UBA validation hook after script compilation;
-- local batch-mode validation remains optional and is no longer a project-owner requirement.
+## Unity Build Automation evidence
 
-Exact-head/static validation completed after the cloud-path changes:
-- PR #2 remained mergeable;
-- branch remained 0 commits behind `main`;
-- final changed-file list remained limited to the intended Unity foundation/docs/CI scope;
-- GitHub static workflow run #8 passed on pre-bookkeeping head `d9eab892342e26a9a95838b3f2f56018f634237e`;
-- stale/superseded artifact checks passed on that head.
+Unity Build Automation build #1 ran on exact PR head:
 
-Still required:
-- connect this GitHub repository to Unity Build Automation from the Unity Dashboard;
-- run Unity 6000.3.24f1 package resolution, script compilation, the pre-export validator, and Edit Mode tests in UBA;
-- review authoritative resolved package/settings evidence before merging.
+`3d8e5453cce2c0b8498f94b76aaa6aee9a9c61ec`
 
-A successful static check is not a Unity compile.
+Validated:
+- repository checkout succeeded;
+- Unity auto-detected `6000.3.24f1`;
+- exact editor changeset `4e7b9b5b6244` launched;
+- package resolution completed;
+- the expected pinned foundation packages resolved;
+- script compilation completed successfully;
+- Edit Mode tests completed with exit code 0;
+- `PartyNight.Foundation.Editor.ProjectFoundationValidator.PreExport` executed;
+- foundation validator reported success.
+
+The overall cloud build was marked failed only at Player export because this foundation intentionally contains no configured build scene.
+
+Exact export failure:
+
+`ERROR: There were no scenes configured to build!`
+
+That failure is outside this task's scope because scenes were explicitly excluded. No fake scene was added merely to produce a green export.
+
+## Repository/static validation
+
+PR #2 exact validated head:
+`3d8e5453cce2c0b8498f94b76aaa6aee9a9c61ec`
+
+GitHub static workflow:
+- run #9 passed on the exact validated PR head;
+- branch was 0 commits behind `main`;
+- PR was mergeable;
+- changed files were limited to Unity foundation/docs/CI scope;
+- generated Unity directories were absent;
+- stale/superseded artifact checks passed.
+
+## Merge
+
+PR: #2
+
+Title:
+`Create pinned Unity project foundation`
+
+Validated PR head:
+`3d8e5453cce2c0b8498f94b76aaa6aee9a9c61ec`
+
+Merge method:
+squash
+
+Squash merge commit:
+`42e05a03dcf64f0d63753db9cabd0ebf70f72929`
+
+PR state:
+merged
+
+Post-merge comparison confirmed `main` contains the expected foundation diff from the previous main head.
 
 ## Cleanup
 
-Hard rule: no superseded, obsolete, duplicate, temporary, debug, backup, compatibility, or abandoned implementation may remain in the affected area when this task closes.
+Hard project rule remains:
 
-Current cleanup state:
-- no temporary/debug scripts;
-- no generated Unity directories;
-- no fake `packages-lock.json`;
-- no hand-authored scene/prefab/URP asset;
-- no `.old`, `.bak`, `.orig`, `.rej`, or temporary backup files;
+No superseded, obsolete, duplicate, temporary, debug, backup, compatibility, or abandoned implementation may remain in an affected area when a task closes.
+
+Verified for this task:
+- no backup copies;
+- no `.old`, `.bak`, `.orig`, `.rej`, or temporary artifacts;
 - no legacy/deprecated/obsolete duplicate directories;
-- no unrelated repository changes;
-- static validation now rejects common stale/superseded artifact patterns.
+- no generated Unity directories;
+- no fake package lock file;
+- no unrelated project code;
+- no fake serialized scene/prefab/URP assets.
 
-## Conflicts
+## Architecture state
 
-No competing Unity project, runtime assembly, input system owner, network manager, scene architecture, or gameplay implementation exists.
+The foundation now proves that the selected Unity/package stack can open, resolve, compile, and execute editor tests in the phone-only cloud workflow.
 
-## Blockers / risks
-
-Current external validation requirement:
-- the GitHub repository must be connected to Unity Build Automation in the user's Unity Dashboard. That account authorization is external to this GitHub connection and cannot be completed by repository code alone.
-
-Additional risks:
-- the first authoritative cloud editor run may generate additional ProjectSettings and package-resolution output; those results must be inspected before merge;
-- Web transport behavior is not validated by package installation;
-- repository visibility remains public.
+Not yet implemented:
+- URP renderer/pipeline assets;
+- real Unity scene;
+- Input Actions;
+- player controller;
+- camera;
+- touch controls;
+- gameplay;
+- multiplayer objects;
+- Web/mobile runtime validation.
 
 ## Backlog
 
 Not active:
-- evaluate/import a polished modular character base, including the ithappy packs discussed with the user; explicitly avoid blocky/Roblox-like character art;
-- create URP renderer/pipeline assets in Unity;
-- activate/configure Input System and create abstract action maps;
-- local movement/controller;
-- Hotbox Havoc local prototype;
+- create the first real Unity scene and URP project assets;
+- create the abstract input action layer;
+- implement local movement/controller;
+- create the local Hotbox Havoc prototype;
+- evaluate/import a polished modular character base while explicitly avoiding blocky/Roblox-like character art;
 - authoritative multiplayer;
 - lobby/round lifecycle;
 - Web/mobile validation;
@@ -207,20 +135,26 @@ Not active:
 
 ## Git state
 
-Repository: `UglyGameFace/The-420-Lobby-Party-Night`
+Repository:
+`UglyGameFace/The-420-Lobby-Party-Night`
 
-Base/default branch: `main`
+Default branch:
+`main`
 
-Base head: `8af5aad9ea96168bf790cc7d456cc77a559e21de`
+Completed task branch:
+`foundation/unity-project`
 
-Working branch: `foundation/unity-project`
+Validated PR head:
+`3d8e5453cce2c0b8498f94b76aaa6aee9a9c61ec`
 
-Last exact pre-bookkeeping validated head: `d9eab892342e26a9a95838b3f2f56018f634237e`
+PR:
+#2
 
-PR: #2, draft.
+Squash merge:
+`42e05a03dcf64f0d63753db9cabd0ebf70f72929`
 
-Merge status: not merged; intentionally blocked on Unity Build Automation editor/test validation.
+The exact post-closeout `main` head is verified externally after this bookkeeping commit because a commit cannot contain its own resulting SHA.
 
 ## Next step
 
-Keep PR #2 draft and unmerged until the one-time Unity Dashboard repository connection is authorized and Unity Build Automation has resolved the project, compiled scripts, run the pre-export validator, and passed Edit Mode tests.
+Start a new single active task for the **first real Unity scene + URP project assets + abstract input foundation**, without starting Hotbox Havoc gameplay logic until that shared scene/input base is validated.
