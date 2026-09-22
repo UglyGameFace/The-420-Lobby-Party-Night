@@ -32,6 +32,13 @@ EXPECTED_INPUT_ACTIONS = {
     "UseItem": ("Button", "Button"),
     "Emote": ("Button", "Button"),
 }
+EXPECTED_HOTBOX_PROTOTYPE_FILES = (
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundPhase.cs",
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundController.cs",
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototype.cs",
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeVisuals.cs",
+    "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeHud.cs",
+)
 EXPECTED_GAMEPAD_BINDINGS = {
     "Move": "<Gamepad>/leftStick",
     "Look": "<Gamepad>/rightStick",
@@ -464,6 +471,11 @@ def validate_gameplay_foundation() -> None:
         "Assets/PartyNight/Gameplay/Runtime/PartyNightOrbitCamera.cs",
         "Assets/PartyNight/Gameplay/Runtime/PartyNightLocalPlayerController.cs",
         "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundPhase.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundController.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototype.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeVisuals.cs",
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeHud.cs",
     )
     for relative in required_runtime_files:
         read_required(relative)
@@ -532,6 +544,85 @@ def validate_gameplay_foundation() -> None:
         fail("project-wide input reader must not disable or destroy the shared Action Asset")
     if "device is Pointer" not in input_reader:
         fail("PartyNightInputReader must classify pointer delta look separately")
+
+
+def validate_hotbox_havoc_prototype() -> None:
+    for relative in EXPECTED_HOTBOX_PROTOTYPE_FILES:
+        read_required(relative)
+
+    round_controller = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundController.cs"
+    )
+    required_constants = (
+        "CountdownSeconds = 3f",
+        "ActiveRoundSeconds = 20f",
+        "StartClearRadius = 8.5f",
+        "EndClearRadius = 3f",
+        "ExposureToEliminateSeconds = 2.5f",
+    )
+    for value in required_constants:
+        if value not in round_controller:
+            fail(f"Hotbox Havoc prototype is missing required tuning constant: {value}")
+
+    prototype = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototype.cs"
+    )
+    if "VisualValidation/HotboxHavoc_Overview.png" not in prototype:
+        fail("Hotbox Havoc prototype visual artifact path changed unexpectedly")
+
+    composition = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs"
+    )
+    if composition.count("AddComponent<HotboxHavocPrototype>()") != 1:
+        fail("FoundationSceneComposition must create exactly one HotboxHavocPrototype")
+
+    visual_code = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/HotboxHavocPrototypeVisuals.cs"
+    )
+    if "Universal Render Pipeline/Unlit" not in visual_code:
+        fail("Hotbox prototype visuals must use the project URP pipeline")
+    if "SpawnMarkerCount = 16" not in visual_code:
+        fail("Hotbox prototype must expose 16 future multiplayer spawn markers")
+
+    runtime_files = list(EXPECTED_HOTBOX_PROTOTYPE_FILES) + [
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs",
+    ]
+    for relative in runtime_files:
+        text = read_required(relative)
+        if "UnityEngine.InputSystem" in text:
+            fail(f"{relative} bypasses PartyNight.Input with direct Input System access")
+        for physical_path in ("<Keyboard>", "<Mouse>", "<Gamepad>", "<Touchscreen>"):
+            if physical_path in text:
+                fail(f"{relative} hardcodes physical input path {physical_path}")
+
+    capture_test = read_required(
+        "Assets/PartyNight/Tests/PlayMode/HotboxHavocRuntimeTests.cs"
+    )
+    for required in (
+        "CapturesRealUnityVisualProgressArtifact",
+        "camera.Render()",
+        "Texture2D",
+        "EncodeToPNG",
+        "1280",
+        "720",
+    ):
+        if required not in capture_test:
+            fail(f"visual validation Play Mode test missing {required}")
+
+    exporter = read_required(
+        "Assets/PartyNight/Editor/HotboxHavocVisualArtifactExporter.cs"
+    )
+    if "#if UNITY_CLOUD_BUILD" not in exporter:
+        fail("visual artifact exporter must enforce capture presence on Unity Cloud")
+    if "BuildFailedException" not in exporter:
+        fail("Unity Cloud visual artifact exporter must fail when evidence is missing")
+
+    gitignore = read_required(".gitignore")
+    if "/VisualValidation/" not in gitignore:
+        fail("generated VisualValidation directory must be gitignored")
+
+    if (ROOT / "VisualValidation").exists():
+        fail("generated VisualValidation output must never be committed")
 
 
 def validate_capture_cleanup() -> None:
@@ -654,6 +745,7 @@ def main() -> None:
     validate_render_pipeline_assembly_references()
     validate_input_foundation()
     validate_gameplay_foundation()
+    validate_hotbox_havoc_prototype()
     validate_capture_cleanup()
     validate_build_scene()
     validate_csharp_namespace_hygiene()

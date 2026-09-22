@@ -87,4 +87,4 @@ Repository bootstrap, shared Unity foundation, the first buildable scene, author
 
 No Hotbox Havoc gameplay loop has been validated yet.
 
-The next focused implementation task is the **local Hotbox Havoc prototype**, built on the validated input/movement/camera runtime foundation.
+The current focused implementation task is the **local Hotbox Havoc prototype + visual validation**. The Unity Cloud artifact will include a real runtime-rendered PNG so visible progress is reviewed alongside logs.

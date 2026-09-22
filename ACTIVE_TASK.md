@@ -19,7 +19,7 @@ Working branch:
 `prototype/hotbox-havoc-local-visuals`
 
 State:
-**INVESTIGATION / IMPLEMENTATION**
+**IMPLEMENTED — STATIC VALIDATION PENDING**
 
 ## Outcome
 
@@ -141,6 +141,20 @@ Before merge:
 
 Discord remains an external integration surface. The Hotbox Havoc local prototype has no Discord runtime dependency.
 
+## Implemented
+
+- local Hotbox Havoc round lifecycle;
+- shrinking clear zone and fictional haze progression;
+- outside-zone exposure/elimination and automatic result restart;
+- visible arena prototype with lounge/neon language;
+- 16 future multiplayer spawn markers;
+- local-player engineering beacon instead of fake character art;
+- prototype HUD;
+- real Unity 1280x720 visual capture Play Mode test;
+- Unity Cloud visual artifact exporter;
+- cloud build fails if the required PNG was not produced;
+- permanent editor/static validation extensions.
+
 ## Next step
 
-Implement the local round state, prototype visualization/HUD, deterministic screenshot capture/export path, static validation, and Play Mode tests on this branch.
+Pass GitHub static CI on the exact implementation head, then run Unity Build Automation with Edit Mode and Play Mode tests. Download the resulting build artifact and inspect the real Unity PNG before merge.

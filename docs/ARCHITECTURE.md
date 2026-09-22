@@ -223,3 +223,27 @@ The future authoritative multiplayer task must validate/drive the same movement 
 The foundation scene intentionally has no placeholder character model. Collision and movement can be validated before final character art exists.
 
 Discord remains outside all of these runtime components.
+
+
+## Local Hotbox Havoc prototype
+
+The first minigame implementation begins as a local deterministic prototype on top of the validated input/movement/camera stack.
+
+Current prototype state:
+- one local player;
+- 3 second countdown;
+- 20 second active survival window;
+- fictional haze progression;
+- a clear zone that shrinks from 8.5 m to 3.0 m;
+- outside-zone exposure that eliminates after 2.5 continuous seconds;
+- recovery when the player returns inside;
+- survive-the-timer win state;
+- result state followed by automatic restart.
+
+These are tuning constants for proving the loop, not permanent competitive balance.
+
+The prototype does not model realistic drug consumption or intoxication. Haze is a fictional party-game pressure mechanic.
+
+The visible arena is intentionally an engineering/prototype presentation layer. It uses inexpensive geometry, lounge/neon color language, future spawn beacons, and a local-player beacon. It is not final environment or character art.
+
+The local round controller is not authoritative multiplayer state. When networking begins, server authority must own round timers, elimination, win state, spawning, and important movement validation rather than trusting this client-only prototype.
