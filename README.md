@@ -77,4 +77,4 @@ Repository bootstrap, the shared Unity project foundation, and the first real bu
 
 No Hotbox Havoc gameplay implementation has been validated yet.
 
-The next focused task is authoritative Unity project settings + `packages-lock.json` + real URP activation, followed by the abstract Input Action foundation.
+The authoritative Unity project settings, deterministic package lock, and URP activation are complete. The current focused task is the cross-platform Input Action foundation for keyboard/mouse, native gamepads, and mobile on-screen controls.

@@ -3,6 +3,8 @@
   "rootNamespace": "PartyNight.Foundation.Editor",
   "references": [
     "PartyNight.Foundation",
+    "PartyNight.Input",
+    "Unity.InputSystem",
     "Unity.RenderPipelines.Core.Runtime",
     "Unity.RenderPipelines.Universal.Runtime"
   ],

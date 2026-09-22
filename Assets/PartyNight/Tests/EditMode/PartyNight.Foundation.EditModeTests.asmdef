@@ -3,7 +3,9 @@
   "rootNamespace": "PartyNight.Foundation.Tests",
   "references": [
     "PartyNight.Foundation",
-    "PartyNight.Foundation.Editor"
+    "PartyNight.Foundation.Editor",
+    "PartyNight.Input",
+    "Unity.InputSystem"
   ],
   "includePlatforms": [
     "Editor"

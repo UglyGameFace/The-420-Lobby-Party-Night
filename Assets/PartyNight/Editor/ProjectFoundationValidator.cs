@@ -35,6 +35,7 @@ namespace PartyNight.Foundation.Editor
         public static void PreExport()
         {
             Validate();
+            InputFoundationValidator.Validate();
         }
 
         public static void Validate()
