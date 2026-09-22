@@ -151,7 +151,10 @@ namespace PartyNight.Gameplay.Tests
             Assert.That(
                 motor.IsGrounded,
                 Is.True,
-                "Player must settle onto the foundation ground before jumping.");
+                "Player must settle onto the foundation ground before jumping. " +
+                $"y={composition.LocalPlayer.transform.position.y:F4}, " +
+                $"verticalVelocity={motor.Velocity.y:F4}, " +
+                $"nativeGrounded={motor.CharacterController.isGrounded}.");
 
             var startY = composition.LocalPlayer.transform.position.y;
             motor.Tick(Vector3.zero, true, 0.02f);
@@ -172,7 +175,10 @@ namespace PartyNight.Gameplay.Tests
             Assert.That(
                 motor.IsGrounded,
                 Is.True,
-                "Player must return to the foundation ground after the jump.");
+                "Player must return to the foundation ground after the jump. " +
+                $"y={composition.LocalPlayer.transform.position.y:F4}, " +
+                $"verticalVelocity={motor.Velocity.y:F4}, " +
+                $"nativeGrounded={motor.CharacterController.isGrounded}.");
         }
 
         [Test]
