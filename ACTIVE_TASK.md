@@ -19,7 +19,7 @@ Working branch:
 `prototype/hotbox-havoc-local-visuals`
 
 State:
-**IMPLEMENTED — STATIC VALIDATION PENDING**
+**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #10 DEPENDENCY FIX**
 
 ## Outcome
 
@@ -155,6 +155,37 @@ Discord remains an external integration surface. The Hotbox Havoc local prototyp
 - cloud build fails if the required PNG was not produced;
 - permanent editor/static validation extensions.
 
+## Build #10 findings
+
+Unity Build Automation Build #10 checked out:
+
+`c926b4189397438ba66460da53ac8d2e8ba103fe`
+
+Confirmed before failure:
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- Edit Mode launch occurred;
+- Play Mode launch occurred.
+
+Build #10 did **not** reach test execution or Player export because the Play Mode
+test assembly failed compilation at the real PNG capture:
+
+`Texture2D.EncodeToPNG()`
+
+Root cause:
+- PNG encoding is supplied by Unity's built-in Image Conversion module;
+- the project had not declared `com.unity.modules.imageconversion`;
+- static validation therefore passed while Unity compilation correctly failed.
+
+Implemented correction:
+- declare `com.unity.modules.imageconversion@1.0.0` in `Packages/manifest.json`;
+- lock the built-in module in `Packages/packages-lock.json`;
+- require the module in the static package contract so the regression cannot recur.
+
+The exact-revision PNG/manifest evidence design remains unchanged.
+
 ## Next step
 
-Pass GitHub static CI on the exact implementation head, then run Unity Build Automation with Edit Mode and Play Mode tests. Download the resulting build artifact and inspect the real Unity PNG before merge.
+Pass GitHub static CI on the exact dependency-fix head, review the final diff, then
+run a **new** Unity Build Automation build with Edit Mode and Play Mode enabled.
+The new build must check out the exact final PR head. Download its artifact and
+inspect the real Unity PNG before merge.
