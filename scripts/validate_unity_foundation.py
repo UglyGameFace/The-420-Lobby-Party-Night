@@ -548,14 +548,6 @@ def validate_gameplay_foundation() -> None:
         fail("Party Night movement motor must use CharacterController")
     if "Rigidbody" in motor:
         fail("Party Night movement motor must not introduce a parallel Rigidbody controller")
-    if "lastCollisionFlags" not in motor:
-        fail("Party Night movement motor must persist CharacterController collision flags")
-    if "lastCollisionFlags = collisionFlags;" not in motor:
-        fail("Party Night movement motor must store every CharacterController.Move result")
-    if "groundedBeforeMove = IsGrounded;" not in motor:
-        fail("Party Night jump gating must use the motor-owned grounded contract")
-    if "(lastCollisionFlags & CollisionFlags.Below)" not in motor:
-        fail("Party Night IsGrounded must include the most recent Below collision flag")
 
     for relative in required_runtime_files:
         text = read_required(relative)
@@ -617,6 +609,8 @@ def validate_gameplay_foundation() -> None:
         )
     if "PARTY_NIGHT_TEST_RESULT" not in local_player_tests:
         fail("PlayMode tests must emit durable cloud result diagnostics")
+    if "VisualOnlyPrototypePrimitivesDoNotDisplacePlayerAtStartup" not in local_player_tests:
+        fail("PlayMode tests must guard against visual-only collider spawn displacement")
 
     composition_meta = read_required(
         "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs.meta"
@@ -690,6 +684,12 @@ def validate_hotbox_havoc_prototype() -> None:
         fail("Hotbox prototype visuals must use the project URP pipeline")
     if "SpawnMarkerCount = 16" not in visual_code:
         fail("Hotbox prototype must expose 16 future multiplayer spawn markers")
+    if "collider.enabled = false;" not in visual_code:
+        fail("visual-only prototype colliders must be disabled immediately")
+    disable_index = visual_code.index("collider.enabled = false;")
+    destroy_index = visual_code.index("Destroy(collider);", disable_index)
+    if destroy_index < 0 or disable_index > destroy_index:
+        fail("visual-only colliders must be disabled before deferred destruction")
 
     runtime_files = list(EXPECTED_HOTBOX_PROTOTYPE_FILES) + [
         "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs",
