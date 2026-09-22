@@ -52,10 +52,12 @@ namespace PartyNight.Gameplay.Tests
             var context = TestContext.CurrentContext;
             var outcome = context.Result.Outcome;
             var message = context.Result.Message ?? string.Empty;
+            var stackTrace = context.Result.StackTrace ?? string.Empty;
 
             Debug.Log(
                 $"PARTY_NIGHT_TEST_RESULT | {context.Test.FullName} | " +
-                $"{outcome.Status} | {outcome.Label ?? string.Empty} | {message}");
+                $"{outcome.Status} | {outcome.Label ?? string.Empty} | {message} | " +
+                $"STACK: {stackTrace}");
         }
 
         [UnityTearDown]
