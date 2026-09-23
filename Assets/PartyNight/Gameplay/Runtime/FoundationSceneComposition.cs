@@ -1,7 +1,6 @@
 using PartyNight.Networking;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace PartyNight.Gameplay
 {
@@ -49,27 +48,22 @@ namespace PartyNight.Gameplay
             }
 
             GameObject newRuntimeRoot = null;
-            GameObject newNetworkObject = null;
             GameObject newGround = null;
             GameObject newLocalPlayer = null;
             PartyNightOrbitCamera newOrbitCamera = null;
             PartyNightLocalPlayerController newLocalController = null;
             HotboxHavocPrototype newHotboxPrototype = null;
             PartyNightNetworkBootstrap newNetworkBootstrap = null;
+            bool createdNetworkBootstrap = false;
 
             try
             {
                 newRuntimeRoot = new GameObject(RuntimeRootName);
                 newRuntimeRoot.transform.SetParent(transform, false);
 
-                newNetworkObject =
-                    new GameObject(PartyNightNetworkBootstrap.RuntimeName);
-                SceneManager.MoveGameObjectToScene(
-                    newNetworkObject,
-                    gameObject.scene);
                 newNetworkBootstrap =
-                    newNetworkObject.AddComponent<PartyNightNetworkBootstrap>();
-                newNetworkBootstrap.Initialize();
+                    PartyNightNetworkBootstrap.GetOrCreateRuntime(
+                        out createdNetworkBootstrap);
 
                 newGround = new GameObject(GroundName);
                 newGround.transform.SetParent(newRuntimeRoot.transform, false);
@@ -137,9 +131,9 @@ namespace PartyNight.Gameplay
                     Destroy(newRuntimeRoot);
                 }
 
-                if (newNetworkObject != null)
+                if (createdNetworkBootstrap && newNetworkBootstrap != null)
                 {
-                    Destroy(newNetworkObject);
+                    Destroy(newNetworkBootstrap.gameObject);
                 }
 
                 if (newOrbitCamera != null &&
