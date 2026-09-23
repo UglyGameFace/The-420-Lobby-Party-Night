@@ -241,6 +241,13 @@ namespace PartyNight.Gameplay.Tests
             return matches.Length == 1 ? matches[0] : null;
         }
 
+        private static PartyNightNetworkPlayer[] FindAllNetworkPlayers()
+        {
+            return Object.FindObjectsByType<PartyNightNetworkPlayer>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+        }
+
         private static PartyNightNetworkBootstrap[] FindAllNetworkBootstraps()
         {
             return Object.FindObjectsByType<PartyNightNetworkBootstrap>(
