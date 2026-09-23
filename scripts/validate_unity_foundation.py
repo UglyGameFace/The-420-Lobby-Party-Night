@@ -695,6 +695,7 @@ def validate_gameplay_foundation() -> None:
         "frame.JumpPressed",
         "nextSequence = unchecked(sequence + 1u)",
         "SetAutomaticMotorControlEnabled(!active)",
+        "standaloneCharacterController.enabled = !active",
         "hotboxPrototype.gameObject.SetActive(false)",
         "NetworkDespawned += HandleBoundPlayerDespawned",
         "NetworkDespawned -= HandleBoundPlayerDespawned",
