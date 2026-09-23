@@ -29,6 +29,39 @@ namespace PartyNight.Networking
             networkManager.IsServer &&
             !networkManager.IsClient;
 
+        public static PartyNightNetworkBootstrap GetOrCreateRuntime(
+            out bool created)
+        {
+            var existing =
+                Object.FindObjectsByType<PartyNightNetworkBootstrap>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None);
+
+            if (existing.Length > 1)
+            {
+                throw new System.InvalidOperationException(
+                    "Party Night requires exactly one network bootstrap.");
+            }
+
+            if (existing.Length == 1)
+            {
+                created = false;
+                existing[0].Initialize();
+                return existing[0];
+            }
+
+            var runtimeObject = new GameObject(RuntimeName);
+            runtimeObject.SetActive(false);
+
+            var bootstrap =
+                runtimeObject.AddComponent<PartyNightNetworkBootstrap>();
+            bootstrap.Initialize();
+
+            created = true;
+            runtimeObject.SetActive(true);
+            return bootstrap;
+        }
+
         public void Initialize()
         {
             if (initialized)
@@ -46,6 +79,11 @@ namespace PartyNight.Networking
             if (networkManager == null)
             {
                 networkManager = gameObject.AddComponent<NetworkManager>();
+            }
+
+            if (networkManager.NetworkConfig == null)
+            {
+                networkManager.NetworkConfig = new NetworkConfig();
             }
 
             networkManager.NetworkConfig.NetworkTransport = transport;
