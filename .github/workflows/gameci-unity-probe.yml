@@ -1,16 +1,14 @@
 name: Unity GameCI Zero-DevOps Probe
 
 on:
-  push:
-    branches:
-      - ci/gameci-unity-probe
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   unity-probe:
-    name: Real Unity test + Linux build probe
+    name: Real Unity validation probe
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -52,7 +50,6 @@ jobs:
           echo "Unity credential preflight passed. Secret values are intentionally not printed."
 
       - name: Run real Unity Edit + Play Mode tests
-        id: unity_tests
         uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ env.UNITY_LICENSE }}
@@ -63,17 +60,6 @@ jobs:
           unityVersion: 6000.3.24f1
           testMode: all
           artifactsPath: artifacts
-
-      - name: Upload Unity test artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gameci-unity-test-artifacts
-          path: |
-            artifacts
-            VisualValidation
-          if-no-files-found: warn
-          retention-days: 3
 
       - name: Build Linux Player with real Unity
         uses: game-ci/unity-builder@v4
@@ -88,20 +74,57 @@ jobs:
           buildsPath: build
           buildName: PartyNightGameCIProbe
 
-      - name: Inspect Linux build payload
+      - name: Create compact validation proof
         shell: bash
         run: |
           set -euo pipefail
-          echo "=== GAMECI LINUX BUILD ==="
-          find build -maxdepth 4 -type f -print | sort
-          test -n "$(find build -type f -name 'UnityPlayer.so' -print -quit)"
-          test -n "$(find build -type f -name '*.x86_64' -print -quit)"
-          echo "GAMECI_LINUX_BUILD_PAYLOAD=PASS"
+          mkdir -p validation-proof
 
-      - name: Upload Linux build
+          unity_player="$(find build -type f -name 'UnityPlayer.so' -print -quit)"
+          executable="$(find build -type f -name '*.x86_64' -print -quit)"
+
+          test -n "$unity_player"
+          test -n "$executable"
+
+          {
+            echo "revision=$(git rev-parse HEAD)"
+            echo "unity_version=6000.3.24f1"
+            echo "unity_player=$unity_player"
+            echo "unity_player_bytes=$(stat -c%s "$unity_player")"
+            echo "unity_player_sha256=$(sha256sum "$unity_player" | awk '{print $1}')"
+            echo "linux_executable=$executable"
+            echo "linux_executable_bytes=$(stat -c%s "$executable")"
+            echo "linux_executable_sha256=$(sha256sum "$executable" | awk '{print $1}')"
+          } > validation-proof/BUILD_PROOF.txt
+
+          if [ -d VisualValidation ]; then
+            cp -a VisualValidation/. validation-proof/
+          fi
+
+          if [ -d artifacts ]; then
+            find artifacts -type f \( -name '*.xml' -o -name '*.json' -o -name '*.txt' \) \
+              -exec cp --parents {} validation-proof/ \;
+          fi
+
+          echo "=== VALIDATION PROOF ==="
+          cat validation-proof/BUILD_PROOF.txt
+
+      - name: Upload compact validation proof
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gameci-linux-player
-          path: build
-          if-no-files-found: error
-          retention-days: 3
+          name: gameci-validation-proof
+          path: validation-proof
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Upload failure diagnostics only
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameci-failure-diagnostics
+          path: |
+            artifacts
+            Logs
+          if-no-files-found: warn
+          retention-days: 1
