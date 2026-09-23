@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/authoritative-foundation`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY VALIDATION PENDING**
+**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #18 NGO ROOT FIX**
 
 ## Prior validated checkpoint
 
@@ -140,9 +140,50 @@ Before merge:
 GitHub static workflow #93:
 **PASS**
 
+## Build #18 findings
+
+Unity Build Automation Build #18 correctly checked out:
+
+`multiplayer/authoritative-foundation`
+
+at exact revision:
+
+`f06923de242f502269afc185c2e198e71cf95a9c`
+
+Unity version:
+`6000.3.24f1 (4e7b9b5b6244)`
+
+Confirmed:
+- Edit Mode completed with exit code 0;
+- the new `PartyNight.Networking` assembly compiled and was processed by NGO ILPP;
+- NGO and Unity Transport resolved correctly;
+- Play Mode exited with code 2 before Party Night test result reporting;
+- Linux Player export did not run because the Play Mode gate failed.
+
+Root cause:
+`FoundationSceneComposition` created the Party Night network bootstrap under the
+`Foundation Runtime` child hierarchy. NGO explicitly rejects a nested
+`NetworkManager` and logged:
+
+`Party Night Network Bootstrap is nested under Foundation Scene Composition. NetworkManager cannot be nested.`
+
+That invalid topology then caused `PartyNightNetworkBootstrap.Initialize()` to hit a
+null `NetworkConfig` path.
+
+Correction:
+- create the network bootstrap as a scene-root GameObject;
+- explicitly move that root object into the loaded foundation scene;
+- keep gameplay objects under the existing `Foundation Runtime` child root;
+- destroy the root-level network object explicitly if composition throws;
+- add Play Mode assertions proving the bootstrap has no parent and belongs to the
+  foundation scene;
+- add static validation rejecting any future parent assignment for the network object.
+
+No Hotbox rules, movement, input, camera, package versions, or authority model changed.
+
 ## Next step
 
-Freeze the exact static-green head, then run Unity Build Automation with Edit Mode and
-Play Mode enabled. Unity must compile the networking assembly, preserve all existing
-Hotbox/movement tests, pass the new server-only networking tests, validate the current
-visual artifact and export the Linux Player before this task can merge.
+Pass GitHub static CI on the exact Build #18 NGO scene-root fix head and review the
+complete delta. Freeze that SHA. Then run one new Unity Build Automation validation
+build. Edit Mode, all existing Hotbox/movement tests and all networking Play Mode tests
+must pass before exact-revision visual validation and Linux Player export can count.
