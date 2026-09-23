@@ -2,7 +2,8 @@
   "name": "PartyNight.Gameplay",
   "rootNamespace": "PartyNight.Gameplay",
   "references": [
-    "PartyNight.Input"
+    "PartyNight.Input",
+    "PartyNight.Networking"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
