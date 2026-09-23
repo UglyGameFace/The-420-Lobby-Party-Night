@@ -13,13 +13,13 @@ namespace PartyNight.Gameplay
     {
         public const float IntentTimeoutSeconds = 0.25f;
 
-        private readonly NetworkVariable<Vector3> authoritativePosition =
+        private NetworkVariable<Vector3> authoritativePosition =
             new NetworkVariable<Vector3>(
                 Vector3.zero,
                 NetworkVariableReadPermission.Everyone,
                 NetworkVariableWritePermission.Server);
 
-        private readonly NetworkVariable<float> authoritativeYaw =
+        private NetworkVariable<float> authoritativeYaw =
             new NetworkVariable<float>(
                 0f,
                 NetworkVariableReadPermission.Everyone,
