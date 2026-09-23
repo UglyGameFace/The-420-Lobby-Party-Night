@@ -1,3 +1,4 @@
+using PartyNight.Networking;
 using System.Linq;
 using UnityEngine;
 
@@ -17,6 +18,7 @@ namespace PartyNight.Gameplay
         private PartyNightOrbitCamera orbitCamera;
         private PartyNightLocalPlayerController localController;
         private HotboxHavocPrototype hotboxPrototype;
+        private PartyNightNetworkBootstrap networkBootstrap;
 
         public bool IsComposed => runtimeRoot != null;
         public GameObject Ground => ground;
@@ -24,6 +26,7 @@ namespace PartyNight.Gameplay
         public PartyNightOrbitCamera OrbitCamera => orbitCamera;
         public PartyNightLocalPlayerController LocalController => localController;
         public HotboxHavocPrototype HotboxPrototype => hotboxPrototype;
+        public PartyNightNetworkBootstrap NetworkBootstrap => networkBootstrap;
 
         private void Awake()
         {
@@ -50,11 +53,19 @@ namespace PartyNight.Gameplay
             PartyNightOrbitCamera newOrbitCamera = null;
             PartyNightLocalPlayerController newLocalController = null;
             HotboxHavocPrototype newHotboxPrototype = null;
+            PartyNightNetworkBootstrap newNetworkBootstrap = null;
 
             try
             {
                 newRuntimeRoot = new GameObject(RuntimeRootName);
                 newRuntimeRoot.transform.SetParent(transform, false);
+
+                var networkObject =
+                    new GameObject(PartyNightNetworkBootstrap.RuntimeName);
+                networkObject.transform.SetParent(newRuntimeRoot.transform, false);
+                newNetworkBootstrap =
+                    networkObject.AddComponent<PartyNightNetworkBootstrap>();
+                newNetworkBootstrap.Initialize();
 
                 newGround = new GameObject(GroundName);
                 newGround.transform.SetParent(newRuntimeRoot.transform, false);
@@ -113,6 +124,7 @@ namespace PartyNight.Gameplay
                 orbitCamera = newOrbitCamera;
                 localController = newLocalController;
                 hotboxPrototype = newHotboxPrototype;
+                networkBootstrap = newNetworkBootstrap;
             }
             catch
             {
