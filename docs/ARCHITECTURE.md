@@ -247,3 +247,30 @@ The prototype does not model realistic drug consumption or intoxication. Haze is
 The visible arena is intentionally an engineering/prototype presentation layer. It uses inexpensive geometry, lounge/neon color language, future spawn beacons, and a local-player beacon. It is not final environment or character art.
 
 The local round controller is not authoritative multiplayer state. When networking begins, server authority must own round timers, elimination, win state, spawning, and important movement validation rather than trusting this client-only prototype.
+
+
+## Authoritative multiplayer foundation
+
+Party Night's first networking layer uses the already-pinned Netcode for GameObjects
+and Unity Transport packages.
+
+Ownership is split deliberately:
+- `PartyNight.Networking` owns session bootstrap and transport configuration;
+- `PartyNight.Gameplay` may compose/use that bootstrap but does not own transport;
+- the networking assembly does not depend on gameplay, input, Discord, or persistent services.
+
+The supported runtime roles are:
+- `None`: no network session is active;
+- `DedicatedServer`: NGO server-only authority;
+- `Client`: non-authoritative connected player.
+
+Party Night intentionally exposes no host-authority startup path. A player's game client
+must not silently become the authoritative match server.
+
+Dedicated-server builds use the `UNITY_SERVER` path to autostart the server role.
+Normal desktop/mobile/Web clients remain non-authoritative unless explicitly started as
+clients.
+
+This foundation proves session ownership only. Network player spawning, movement
+replication/prediction, server-owned Hotbox round state, lobby/matchmaking, reconnect,
+and WebSocket/WSS validation remain later milestones.
