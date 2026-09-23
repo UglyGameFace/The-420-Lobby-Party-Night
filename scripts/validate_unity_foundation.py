@@ -885,6 +885,36 @@ def validate_networking_foundation() -> None:
             fail(f"networking Play Mode coverage missing: {token}")
 
 
+    component_assertion_contracts = (
+        (
+            "CharacterController",
+            r"Assert\.That\(\s*playerPrefab\.GetComponent<CharacterController>\(\),\s*Is\.Not\.Null",
+            "canonical network player test must require CharacterController",
+        ),
+        (
+            "PartyNightCharacterMotor",
+            r"Assert\.That\(\s*playerPrefab\.GetComponent<PartyNightCharacterMotor>\(\),\s*Is\.Not\.Null",
+            "canonical network player test must require PartyNightCharacterMotor",
+        ),
+        (
+            "PartyNightNetworkMovement",
+            r"Assert\.That\(\s*playerPrefab\.GetComponent<PartyNightNetworkMovement>\(\),\s*Is\.Not\.Null",
+            "canonical network player test must require PartyNightNetworkMovement",
+        ),
+        (
+            "PartyNightLocalPlayerController",
+            r"Assert\.That\(\s*playerPrefab\.GetComponent<PartyNightLocalPlayerController>\(\),\s*Is\.Null",
+            "canonical network player test must reject PartyNightLocalPlayerController",
+        ),
+    )
+    for component_name, pattern, failure_message in component_assertion_contracts:
+        if re.search(pattern, tests, flags=re.MULTILINE) is None:
+            fail(
+                f"{failure_message}; stale or inverted assertion detected for "
+                f"{component_name}"
+            )
+
+
 def validate_hotbox_havoc_prototype() -> None:
     for relative in EXPECTED_HOTBOX_PROTOTYPE_FILES:
         read_required(relative)
