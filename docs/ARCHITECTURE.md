@@ -289,15 +289,20 @@ The canonical Party Night network player is a checked-in NGO prefab at:
 
 `Assets/PartyNight/Networking/Prefabs/PartyNightNetworkPlayer.prefab`
 
-The prefab is intentionally identity-only:
+The player-spawn milestone initially validated this prefab as identity-only. The
+server-authoritative movement milestone intentionally evolves the same canonical prefab
+instead of creating a second player type.
+
+The prefab now contains:
 - exactly one root `NetworkObject`;
 - exactly one `PartyNightNetworkPlayer`;
-- no `CharacterController`;
-- no `PartyNightCharacterMotor`;
+- exactly one `CharacterController`;
+- the existing `PartyNightCharacterMotor`;
+- one `PartyNightNetworkMovement` authority/replication bridge;
 - no `PartyNightLocalPlayerController`.
 
-The local gameplay rig remains the only movement/input implementation until the
-movement-replication milestone deliberately connects local intent to network authority.
+The same CharacterController motor therefore remains the sole movement implementation
+for local and network-authoritative simulation.
 
 `FoundationSceneComposition` owns the serialized prefab reference and supplies it to
 the persistent `PartyNightNetworkBootstrap`. The bootstrap validates the prefab and
@@ -312,3 +317,35 @@ object by itself; actual player objects are created only for connected clients.
 
 Movement replication, prediction/reconciliation, remote presentation and server-owned
 Hotbox state remain subsequent milestones.
+
+
+## Server-authoritative network movement
+
+Network movement follows an intent-to-authority model.
+
+The owning client may submit only:
+- a planar desired world direction;
+- a jump request;
+- a monotonically increasing sequence number.
+
+The movement RPC targets the server and requires NGO owner permission. The server also
+checks the sender id against `OwnerClientId`, rejects non-finite values, rejects
+duplicate/out-of-order sequences, and clamps movement magnitude before simulation.
+
+The client never sends an authoritative position, yaw, velocity, collision result or
+teleport outcome.
+
+The dedicated server advances `PartyNightCharacterMotor` and publishes:
+- authoritative position;
+- authoritative yaw.
+
+Those pose values are NGO `NetworkVariable` instances with server write permission.
+Non-authoritative clients apply the replicated pose directly for this milestone.
+
+Movement intent expires after a short timeout so packet loss/disconnects cannot leave a
+player moving forever from stale input. Jump input is consumed once on the server.
+
+Client prediction, reconciliation and smoothing are deliberately deferred until this
+authority kernel is proven. Local owner camera/input rebinding is also deferred, so the
+current milestone validates the movement authority path rather than pretending the full
+client experience is already complete.

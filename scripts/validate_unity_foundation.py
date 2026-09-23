@@ -525,10 +525,11 @@ def validate_gameplay_foundation() -> None:
     if gameplay_asm.get("references") != [
         "PartyNight.Input",
         "PartyNight.Networking",
+        "Unity.Netcode.Runtime",
     ]:
         fail(
-            "PartyNight.Gameplay must depend only on PartyNight.Input and "
-            "PartyNight.Networking"
+            "PartyNight.Gameplay must depend only on PartyNight.Input, "
+            "PartyNight.Networking, and NGO runtime"
         )
     if "ENABLE_INPUT_SYSTEM" not in gameplay_asm.get("defineConstraints", []):
         fail("PartyNight.Gameplay must require ENABLE_INPUT_SYSTEM")
@@ -537,6 +538,7 @@ def validate_gameplay_foundation() -> None:
         "Assets/PartyNight/Gameplay/Runtime/PartyNightCharacterMotor.cs",
         "Assets/PartyNight/Gameplay/Runtime/PartyNightOrbitCamera.cs",
         "Assets/PartyNight/Gameplay/Runtime/PartyNightLocalPlayerController.cs",
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightNetworkMovement.cs",
         "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs",
         "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundPhase.cs",
         "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundController.cs",
@@ -760,14 +762,18 @@ def validate_networking_foundation() -> None:
     if hash_match is None or int(hash_match.group(1)) == 0:
         fail("network player prefab must carry a non-zero NGO GlobalObjectIdHash")
 
-    if "--- !u!143 " in player_prefab:
-        fail("identity-only network player prefab must not contain CharacterController")
-    for forbidden_guid in (
-        "fdb946e14e514ce5b09a2c210f23fb64",
-        "6957627954ac480aa3c298aeddf141b4",
-    ):
-        if forbidden_guid in player_prefab:
-            fail("identity-only network player prefab duplicates local movement/input code")
+    if player_prefab.count("--- !u!143 ") != 1:
+        fail("network player prefab must contain exactly one CharacterController")
+    if player_prefab.count(
+        "guid: fdb946e14e514ce5b09a2c210f23fb64"
+    ) != 1:
+        fail("network player prefab must reuse exactly one PartyNightCharacterMotor")
+    if player_prefab.count(
+        "guid: 42cd3b22f83e4b9e91377a30a2c3e3e1"
+    ) != 1:
+        fail("network player prefab must contain exactly one PartyNightNetworkMovement")
+    if "guid: 6957627954ac480aa3c298aeddf141b4" in player_prefab:
+        fail("network player prefab must not duplicate PartyNightLocalPlayerController")
 
     scene = read_required("Assets/PartyNight/Scenes/PartyNightFoundation.unity")
     expected_player_ref = (
@@ -798,12 +804,66 @@ def validate_networking_foundation() -> None:
         if token not in bootstrap:
             fail(f"network bootstrap missing player-prefab contract: {token}")
 
+    movement_path = (
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightNetworkMovement.cs"
+    )
+    movement = read_required(movement_path)
+    movement_requirements = (
+        "PartyNightCharacterMotor",
+        "NetworkVariable<Vector3>",
+        "NetworkVariable<float>",
+        "NetworkVariableWritePermission.Server",
+        "SubmitOwnerIntent(",
+        "SubmitMovementIntentRpc(",
+        "SendTo.Server",
+        "RpcInvokePermission.Owner",
+        "rpcParams.Receive.SenderClientId",
+        "senderClientId != OwnerClientId",
+        "Vector3.ClampMagnitude(desiredWorldMove, 1f)",
+        "IntentTimeoutSeconds = 0.25f",
+        "IsNewerSequence",
+        "SimulateAuthoritativeStep",
+        "characterController.enabled = IsServer",
+    )
+    for token in movement_requirements:
+        if token not in movement:
+            fail(f"authoritative network movement missing required contract: {token}")
+
+    if "NetworkVariableWritePermission.Owner" in movement:
+        fail("authoritative movement pose variables must never be owner-writable")
+    if "Rigidbody" in movement or "NetworkTransform" in movement:
+        fail("network movement must reuse the canonical CharacterController motor")
+    if "SubmitMovementIntentRpc(Vector3 position" in movement:
+        fail("clients must not submit authoritative positions to the server")
+    if "SubmitMovementIntentRpc(Vector3 authoritativePosition" in movement:
+        fail("clients must not submit authoritative positions to the server")
+
+    movement_tests = read_required(
+        "Assets/PartyNight/Tests/PlayMode/NetworkMovementRuntimeTests.cs"
+    )
+    movement_test_requirements = (
+        "CanonicalNetworkPlayerUsesExistingCharacterMotor",
+        "ServerMovesSpawnedPlayerThroughCanonicalMotor",
+        "ServerRejectsInvalidDuplicateAndStaleMovementIntent",
+        "TryAcceptServerIntent",
+        "NetworkVariableWritePermission.Server",
+        "CurrentServerMoveIntent",
+        "PARTY_NIGHT_TEST_RESULT",
+    )
+    for token in movement_test_requirements:
+        if token not in movement_tests:
+            fail(f"network movement PlayMode coverage missing: {token}")
+
     tests = read_required(
         "Assets/PartyNight/Tests/PlayMode/NetworkingRuntimeTests.cs"
     )
     required_tests = (
         "FoundationSceneComposesExactlyOneNetworkBootstrap",
         "FoundationConfiguresCanonicalNetworkPlayerPrefab",
+        "GetComponent<CharacterController>()",
+        "GetComponent<PartyNightCharacterMotor>()",
+        "GetComponent<PartyNightNetworkMovement>()",
+        "GetComponent<PartyNightLocalPlayerController>()",
         "FindAllNetworkPlayers",
         "NetworkConfig.PlayerPrefab",
         "NetworkConfig.Prefabs.Prefabs.Any",
@@ -823,6 +883,36 @@ def validate_networking_foundation() -> None:
     for token in required_tests:
         if token not in tests:
             fail(f"networking Play Mode coverage missing: {token}")
+
+
+    component_assertion_contracts = (
+        (
+            "CharacterController",
+            r"Assert\.That\(\s*playerPrefab\.GetComponent<CharacterController>\(\),\s*Is\.Not\.Null",
+            "canonical network player test must require CharacterController",
+        ),
+        (
+            "PartyNightCharacterMotor",
+            r"Assert\.That\(\s*playerPrefab\.GetComponent<PartyNightCharacterMotor>\(\),\s*Is\.Not\.Null",
+            "canonical network player test must require PartyNightCharacterMotor",
+        ),
+        (
+            "PartyNightNetworkMovement",
+            r"Assert\.That\(\s*playerPrefab\.GetComponent<PartyNightNetworkMovement>\(\),\s*Is\.Not\.Null",
+            "canonical network player test must require PartyNightNetworkMovement",
+        ),
+        (
+            "PartyNightLocalPlayerController",
+            r"Assert\.That\(\s*playerPrefab\.GetComponent<PartyNightLocalPlayerController>\(\),\s*Is\.Null",
+            "canonical network player test must reject PartyNightLocalPlayerController",
+        ),
+    )
+    for component_name, pattern, failure_message in component_assertion_contracts:
+        if re.search(pattern, tests, flags=re.MULTILINE) is None:
+            fail(
+                f"{failure_message}; stale or inverted assertion detected for "
+                f"{component_name}"
+            )
 
 
 def validate_hotbox_havoc_prototype() -> None:
