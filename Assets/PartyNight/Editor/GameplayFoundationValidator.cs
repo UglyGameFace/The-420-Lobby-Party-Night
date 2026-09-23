@@ -89,12 +89,34 @@ namespace PartyNight.Foundation.Editor
                         "Party Night network player prefab requires exactly one root identity component.");
                 }
 
-                if (networkPlayerPrefab.GetComponent<CharacterController>() != null ||
-                    networkPlayerPrefab.GetComponent<PartyNightCharacterMotor>() != null ||
-                    networkPlayerPrefab.GetComponent<PartyNightLocalPlayerController>() != null)
+                var networkCharacterController =
+                    networkPlayerPrefab.GetComponent<CharacterController>();
+                if (networkCharacterController == null)
                 {
                     throw new InvalidOperationException(
-                        "Network player prefab is identity-only and must not duplicate local movement/input.");
+                        "Party Night network player requires the canonical CharacterController.");
+                }
+
+                var networkMotor =
+                    networkPlayerPrefab.GetComponent<PartyNightCharacterMotor>();
+                if (networkMotor == null)
+                {
+                    throw new InvalidOperationException(
+                        "Party Night network player requires the canonical PartyNightCharacterMotor.");
+                }
+
+                var networkMovement =
+                    networkPlayerPrefab.GetComponent<PartyNightNetworkMovement>();
+                if (networkMovement == null)
+                {
+                    throw new InvalidOperationException(
+                        "Party Night network player requires PartyNightNetworkMovement.");
+                }
+
+                if (networkPlayerPrefab.GetComponent<PartyNightLocalPlayerController>() != null)
+                {
+                    throw new InvalidOperationException(
+                        "Network player must not duplicate the local input controller.");
                 }
 
                 var mainCameras = roots
