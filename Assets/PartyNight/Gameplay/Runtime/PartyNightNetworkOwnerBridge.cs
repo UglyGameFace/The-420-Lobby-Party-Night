@@ -14,6 +14,7 @@ namespace PartyNight.Gameplay
         private PartyNightOrbitCamera orbitCamera;
         private HotboxHavocPrototype hotboxPrototype;
         private Transform standaloneLocalPlayer;
+        private CharacterController standaloneCharacterController;
         private PartyNightNetworkPlayer boundPlayer;
         private PartyNightNetworkMovement boundMovement;
         private bool initialized;
@@ -33,6 +34,8 @@ namespace PartyNight.Gameplay
             networkSessionActive &&
             localController != null &&
             !localController.AutomaticMotorControlEnabled &&
+            standaloneCharacterController != null &&
+            !standaloneCharacterController.enabled &&
             hotboxPrototype != null &&
             !hotboxPrototype.gameObject.activeSelf;
 
@@ -68,6 +71,13 @@ namespace PartyNight.Gameplay
             hotboxPrototype = localHotboxPrototype != null
                 ? localHotboxPrototype
                 : throw new System.ArgumentNullException(nameof(localHotboxPrototype));
+            standaloneCharacterController =
+                standaloneLocalPlayer.GetComponent<CharacterController>();
+            if (standaloneCharacterController == null)
+            {
+                throw new System.InvalidOperationException(
+                    "Standalone Party Night player requires CharacterController.");
+            }
 
             bootstrap.ModeChanged += HandleModeChanged;
             networkManager.OnConnectionEvent += HandleConnectionEvent;
@@ -292,6 +302,7 @@ namespace PartyNight.Gameplay
         {
             networkSessionActive = active;
             localController.SetAutomaticMotorControlEnabled(!active);
+            standaloneCharacterController.enabled = !active;
 
             if (active)
             {
