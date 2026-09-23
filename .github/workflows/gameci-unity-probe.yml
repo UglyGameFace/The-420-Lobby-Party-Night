@@ -2,6 +2,11 @@ name: Unity GameCI Zero-DevOps Probe
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - ci/gameci-unity-probe
+    paths:
+      - .github/gameci-trigger
 
 permissions:
   contents: read
