@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/authoritative-foundation`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING AFTER BUILD #18 NGO ROOT FIX**
+**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #19 NGO CONFIG FIX**
 
 ## Prior validated checkpoint
 
@@ -181,9 +181,57 @@ Correction:
 
 No Hotbox rules, movement, input, camera, package versions, or authority model changed.
 
+## Build #19 findings
+
+Unity Build Automation Build #19 correctly checked out:
+
+`multiplayer/authoritative-foundation`
+
+at exact revision:
+
+`a39daca87a9fb5ea7608b47272aaafc5e62e10dc`
+
+Unity version:
+`6000.3.24f1 (4e7b9b5b6244)`
+
+Confirmed:
+- Edit Mode completed with exit code 0;
+- the Build #18 nested-NetworkManager failure is gone;
+- no `NetworkManager cannot be nested` error appears;
+- Play Mode still exited with code 2 before Party Night test result reporting;
+- every foundation scene load failed at
+  `PartyNightNetworkBootstrap.Initialize()` line 51;
+- the repeated failure was a null `NetworkManager.NetworkConfig`.
+
+Root cause:
+NGO 2.13.2 exposes `NetworkManager.NetworkConfig` as a serialized public field and
+does not construct it when a `NetworkManager` is added dynamically. Our runtime
+bootstrap added the component and immediately dereferenced `NetworkConfig`.
+
+A second lifecycle issue was identified from NGO 2.13.2 source: once a valid root
+`NetworkManager` enables, NGO calls `DontDestroyOnLoad(gameObject)`. Therefore the
+network session bootstrap is a persistent app/session root, not a gameplay-scene-owned
+object.
+
+Correction:
+- create/reuse exactly one runtime network bootstrap;
+- create a new runtime bootstrap inactive;
+- add NGO/Transport while inactive;
+- assign `new NetworkConfig()` before any config dereference;
+- bind the configured `UnityTransport`;
+- activate only after configuration is complete;
+- allow NGO to perform its normal root singleton/`DontDestroyOnLoad` lifecycle;
+- gameplay composition references/reuses the persistent bootstrap rather than parenting it;
+- Play Mode setup/teardown destroys persistent bootstraps explicitly between tests;
+- Play Mode verifies the NGO singleton, config and transport binding;
+- static validation guards configuration-before-activation and forbids scene rebinding.
+
+No Hotbox rules, movement, input, camera, package versions, or authority model changed.
+
 ## Next step
 
-Pass GitHub static CI on the exact Build #18 NGO scene-root fix head and review the
-complete delta. Freeze that SHA. Then run one new Unity Build Automation validation
-build. Edit Mode, all existing Hotbox/movement tests and all networking Play Mode tests
-must pass before exact-revision visual validation and Linux Player export can count.
+Pass GitHub static CI on the Build #19 NGO configuration/lifecycle correction and review
+the exact delta. Freeze that SHA. Then run one new Unity Build Automation validation.
+The next run must reach the Party Night networking Play Mode tests, prove one configured
+NGO singleton, start/shut down a real server-only session, preserve all existing Hotbox
+and movement tests, validate exact-revision visual evidence, and export the Linux Player.
