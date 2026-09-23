@@ -27,7 +27,7 @@ jobs:
       - name: Check out exact PR #14 source
         uses: actions/checkout@v4
         with:
-          ref: 0e31c65d509df767d6185cd693a1c265d6870395
+          ref: 5be6cffbd404335d8e46b66d052a4b882df72e71
           path: project
 
       - name: Prove exact source revision
@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           actual="$(git -C project rev-parse HEAD)"
           echo "OWNER_SHADOW_REVISION=$actual"
-          test "$actual" = "0e31c65d509df767d6185cd693a1c265d6870395"
+          test "$actual" = "5be6cffbd404335d8e46b66d052a4b882df72e71"
 
       - name: Run production static validator
         shell: bash
