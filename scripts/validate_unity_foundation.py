@@ -719,11 +719,18 @@ def validate_networking_foundation() -> None:
         if token not in composition:
             fail(f"foundation composition missing networking ownership: {token}")
 
+    if "newNetworkObject.transform.SetParent" in composition:
+        fail("NGO NetworkManager bootstrap must remain a scene-root GameObject")
+    if "SceneManager.MoveGameObjectToScene(" not in composition:
+        fail("network bootstrap must be explicitly owned by the foundation scene")
+
     tests = read_required(
         "Assets/PartyNight/Tests/PlayMode/NetworkingRuntimeTests.cs"
     )
     required_tests = (
         "FoundationSceneComposesExactlyOneNetworkBootstrap",
+        "transform.parent",
+        "gameObject.scene.handle",
         "DefaultFoundationSceneIsNotAuthoritative",
         "DedicatedServerStartsWithoutBecomingAClient",
         "StartDedicatedServer(TestServerPort)",
