@@ -1,0 +1,93 @@
+name: Party Night Owner Handoff Shadow Runtime
+
+on:
+  push:
+    branches:
+      - ci/gameci-unity-probe
+    paths:
+      - ci/owner_shadow/**
+      - .github/workflows/owner-handoff-shadow-probe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  owner-handoff-shadow:
+    name: Compile + execute owned-player handoff source
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out shadow harness
+        uses: actions/checkout@v4
+        with:
+          ref: ci/gameci-unity-probe
+          path: probe
+
+      - name: Check out exact PR #14 source
+        uses: actions/checkout@v4
+        with:
+          ref: 1c626a2163fe8b71ea3a6cb7dd731573bdd37dcc
+          path: project
+
+      - name: Prove exact source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git -C project rev-parse HEAD)"
+          echo "OWNER_SHADOW_REVISION=$actual"
+          test "$actual" = "1c626a2163fe8b71ea3a6cb7dd731573bdd37dcc"
+
+      - name: Run production static validator
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 project/scripts/validate_unity_foundation.py
+
+      - name: Copy exact production sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf probe/ci/owner_shadow/Source
+          mkdir -p probe/ci/owner_shadow/Source
+
+          cp project/Assets/PartyNight/Input/Runtime/PartyNightInputFrame.cs \
+             probe/ci/owner_shadow/Source/
+          cp project/Assets/PartyNight/Input/Runtime/PartyNightLookInputMode.cs \
+             probe/ci/owner_shadow/Source/
+          cp project/Assets/PartyNight/Gameplay/Runtime/PartyNightCharacterMotor.cs \
+             probe/ci/owner_shadow/Source/
+          cp project/Assets/PartyNight/Gameplay/Runtime/PartyNightOrbitCamera.cs \
+             probe/ci/owner_shadow/Source/
+          cp project/Assets/PartyNight/Gameplay/Runtime/PartyNightLocalPlayerController.cs \
+             probe/ci/owner_shadow/Source/
+          cp project/Assets/PartyNight/Gameplay/Runtime/PartyNightNetworkMovement.cs \
+             probe/ci/owner_shadow/Source/
+          cp project/Assets/PartyNight/Gameplay/Runtime/PartyNightNetworkOwnerBridge.cs \
+             probe/ci/owner_shadow/Source/
+          cp project/Assets/PartyNight/Networking/Runtime/PartyNightNetworkMode.cs \
+             probe/ci/owner_shadow/Source/
+          cp project/Assets/PartyNight/Networking/Runtime/PartyNightNetworkBootstrap.cs \
+             probe/ci/owner_shadow/Source/
+          cp project/Assets/PartyNight/Networking/Runtime/PartyNightNetworkPlayer.cs \
+             probe/ci/owner_shadow/Source/
+
+          echo "=== OWNER HANDOFF PRODUCTION SOURCE HASHES ==="
+          sha256sum probe/ci/owner_shadow/Source/*.cs
+
+      - name: Compile actual owner-handoff source against strict shadow API
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet build probe/ci/owner_shadow/PartyNight.OwnerShadow.csproj \
+            --configuration Release \
+            --nologo
+
+      - name: Execute owner-handoff shadow tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet run \
+            --project probe/ci/owner_shadow/PartyNight.OwnerShadow.csproj \
+            --configuration Release \
+            --no-build
