@@ -71,3 +71,9 @@ jobs:
             --project probe/ci/shadow/PartyNight.Shadow.csproj \
             --configuration Release \
             --no-build
+
+      - name: Prove static authority guards reject mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 probe/ci/shadow/run_validator_mutations.py project
