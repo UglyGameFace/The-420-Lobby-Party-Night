@@ -21,6 +21,10 @@ namespace PartyNight.Networking
         public NetworkManager NetworkManager => networkManager;
         public UnityTransport Transport => transport;
         public PartyNightNetworkMode Mode => mode;
+        public GameObject PlayerPrefab =>
+            networkManager != null && networkManager.NetworkConfig != null
+                ? networkManager.NetworkConfig.PlayerPrefab
+                : null;
 
         public bool IsAuthoritativeServer =>
             initialized &&
@@ -102,6 +106,54 @@ namespace PartyNight.Networking
                     "Party Night dedicated server failed to start.");
             }
 #endif
+        }
+
+        public void ConfigurePlayerPrefab(GameObject playerPrefab)
+        {
+            if (!initialized || networkManager == null ||
+                networkManager.NetworkConfig == null)
+            {
+                throw new System.InvalidOperationException(
+                    "PartyNightNetworkBootstrap must be initialized before configuring the player prefab.");
+            }
+
+            if (playerPrefab == null)
+            {
+                throw new System.ArgumentNullException(nameof(playerPrefab));
+            }
+
+            var networkObject = playerPrefab.GetComponent<NetworkObject>();
+            if (networkObject == null)
+            {
+                throw new System.InvalidOperationException(
+                    "Party Night network player prefab requires a root NetworkObject.");
+            }
+
+            if (playerPrefab.GetComponent<PartyNightNetworkPlayer>() == null)
+            {
+                throw new System.InvalidOperationException(
+                    "Party Night network player prefab requires PartyNightNetworkPlayer.");
+            }
+
+            if (networkObject.PrefabIdHash == 0)
+            {
+                throw new System.InvalidOperationException(
+                    "Party Night network player prefab must have a non-zero NGO prefab hash.");
+            }
+
+            var current = networkManager.NetworkConfig.PlayerPrefab;
+            if (current == playerPrefab)
+            {
+                return;
+            }
+
+            if (networkManager.IsListening)
+            {
+                throw new System.InvalidOperationException(
+                    "Party Night player prefab cannot change while a network session is running.");
+            }
+
+            networkManager.NetworkConfig.PlayerPrefab = playerPrefab;
         }
 
         public bool StartDedicatedServer(ushort port = DefaultPort)
