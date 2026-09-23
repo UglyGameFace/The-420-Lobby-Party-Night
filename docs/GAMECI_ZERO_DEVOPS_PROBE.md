@@ -45,29 +45,27 @@ It:
 
 The full Linux build is intentionally not uploaded.
 
-## Unity Personal secrets
+## Unity Personal licensing status
 
-Current GameCI Personal-license documentation requires a Unity Hub-generated `.ulf`
-license plus Unity account credentials.
+This hosted real-Unity route is currently **BLOCKED for this project workflow**.
 
-On Windows, after activating Unity Personal through Unity Hub, the usual license path is:
+The project owner is phone-only and does not have access to a desktop machine running
+Unity Hub.
 
-`C:\ProgramData\Unity\Unity_lic.ulf`
+Unity's current official licensing documentation states that Unity Personal activation
+must be performed through Unity Hub. Manual .alf/.ulf activation and command-line
+activation do not support Unity Personal.
 
-In GitHub:
+Therefore:
+- do not ask the project owner to retrieve a Windows/macOS/Linux Unity license file;
+- do not ask the project owner to use a desktop-only Unity Hub flow;
+- do not use undocumented browser/devtools workarounds to bypass Unity's Personal
+  activation flow;
+- do not trigger the hosted GameCI Unity job while those constraints remain.
 
-Repository -> Settings -> Secrets and variables -> Actions
+Keep this workflow as a parked experiment only.
 
-Create:
-
-- `UNITY_LICENSE` = complete contents of `Unity_lic.ulf`
-- `UNITY_EMAIL` = Unity account email
-- `UNITY_PASSWORD` = Unity account password
-
-Never commit any of these values to the repository.
-
-The first probe already confirmed that none of these three secrets were configured at
-that time. It stopped before Unity launched.
+The license-free shadow runtime is the active zero-Unity-cost validation path.
 
 ## What counts as useful evidence
 
