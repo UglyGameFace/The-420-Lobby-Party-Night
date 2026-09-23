@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/authoritative-foundation`
 
 State:
-**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #19 NGO CONFIG FIX**
+**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING AFTER BUILD #19 NGO CONFIG FIX**
 
 ## Prior validated checkpoint
 
