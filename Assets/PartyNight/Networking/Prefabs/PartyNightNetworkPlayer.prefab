@@ -9,8 +9,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8021095720504756892}
+  - component: {fileID: 8021095720504756895}
   - component: {fileID: 8021095720504756893}
   - component: {fileID: 8021095720504756894}
+  - component: {fileID: 8021095720504756896}
+  - component: {fileID: 8021095720504756897}
   m_Layer: 0
   m_Name: PartyNightNetworkPlayer
   m_TagString: Untagged
@@ -33,6 +36,31 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!143 &8021095720504756895
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8021095720504756891}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.8
+  m_Radius: 0.45
+  m_SlopeLimit: 50
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!114 &8021095720504756893
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58,5 +86,34 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e9a2e22d9a741e79208af5b3e2ecf56, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+--- !u!114 &8021095720504756896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8021095720504756891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdb946e14e514ce5b09a2c210f23fb64, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  moveSpeed: 6
+  acceleration: 30
+  turnSpeedDegreesPerSecond: 720
+  gravity: -25
+  jumpHeight: 1.4
+--- !u!114 &8021095720504756897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8021095720504756891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42cd3b22f83e4b9e91377a30a2c3e3e1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
