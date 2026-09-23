@@ -681,7 +681,6 @@ def validate_gameplay_foundation() -> None:
         fail("orbit camera must support ownership retargeting without a second camera")
 
     owner_bridge_requirements = (
-        "NetworkManager.LocalClient.PlayerObject",
         "networkManager.LocalClient.PlayerObject",
         "networkManager.OnConnectionEvent",
         "ConnectionEvent.ClientConnected",
