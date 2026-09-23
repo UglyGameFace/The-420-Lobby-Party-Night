@@ -98,6 +98,14 @@ namespace PartyNight.Gameplay.Tests
 
             Assert.That(bootstraps, Has.Length.EqualTo(1));
             Assert.That(composition.NetworkBootstrap, Is.SameAs(bootstraps[0]));
+            Assert.That(
+                bootstraps[0].transform.parent,
+                Is.Null,
+                "NGO NetworkManager must remain on a scene-root GameObject.");
+            Assert.That(
+                bootstraps[0].gameObject.scene.handle,
+                Is.EqualTo(loadedScene.handle),
+                "Network bootstrap must stay owned by the foundation scene.");
             Assert.That(bootstraps[0].IsInitialized, Is.True);
             Assert.That(bootstraps[0].NetworkManager, Is.Not.Null);
             Assert.That(bootstraps[0].Transport, Is.Not.Null);
