@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/server-authoritative-movement`
 
 State:
-**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #22 TEST CONTRACT FIX**
+**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING AFTER BUILD #22 TEST CONTRACT FIX**
 
 ## Prior validated checkpoint
 
