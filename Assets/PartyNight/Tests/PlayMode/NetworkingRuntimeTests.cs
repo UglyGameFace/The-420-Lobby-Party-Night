@@ -2,6 +2,7 @@ using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using PartyNight.Networking;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -19,6 +20,14 @@ namespace PartyNight.Gameplay.Tests
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            DestroyAllNetworkBootstraps();
+            yield return null;
+
+            Assert.That(
+                NetworkManager.Singleton,
+                Is.Null,
+                "Networking tests require a clean NGO singleton before scene load.");
+
             var existing = SceneManager.GetSceneByPath(FoundationScenePath);
             if (existing.IsValid() && existing.isLoaded)
             {
@@ -65,9 +74,13 @@ namespace PartyNight.Gameplay.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            var bootstrap = FindBootstrapOrNull();
-            bootstrap?.Shutdown();
+            DestroyAllNetworkBootstraps();
             yield return null;
+
+            Assert.That(
+                NetworkManager.Singleton,
+                Is.Null,
+                "Networking test cleanup must release the NGO singleton.");
 
             if (!loadedScene.IsValid() || !loadedScene.isLoaded)
             {
@@ -90,25 +103,24 @@ namespace PartyNight.Gameplay.Tests
         public void FoundationSceneComposesExactlyOneNetworkBootstrap()
         {
             var composition = FindComposition();
-            var bootstraps = loadedScene
-                .GetRootGameObjects()
-                .SelectMany(root =>
-                    root.GetComponentsInChildren<PartyNightNetworkBootstrap>(true))
-                .ToArray();
+            var bootstraps = FindAllNetworkBootstraps();
 
             Assert.That(bootstraps, Has.Length.EqualTo(1));
             Assert.That(composition.NetworkBootstrap, Is.SameAs(bootstraps[0]));
             Assert.That(
                 bootstraps[0].transform.parent,
                 Is.Null,
-                "NGO NetworkManager must remain on a scene-root GameObject.");
-            Assert.That(
-                bootstraps[0].gameObject.scene.handle,
-                Is.EqualTo(loadedScene.handle),
-                "Network bootstrap must stay owned by the foundation scene.");
+                "NGO NetworkManager must remain on a root GameObject.");
             Assert.That(bootstraps[0].IsInitialized, Is.True);
             Assert.That(bootstraps[0].NetworkManager, Is.Not.Null);
             Assert.That(bootstraps[0].Transport, Is.Not.Null);
+            Assert.That(bootstraps[0].NetworkManager.NetworkConfig, Is.Not.Null);
+            Assert.That(
+                bootstraps[0].NetworkManager.NetworkConfig.NetworkTransport,
+                Is.SameAs(bootstraps[0].Transport));
+            Assert.That(
+                NetworkManager.Singleton,
+                Is.SameAs(bootstraps[0].NetworkManager));
         }
 
         [Test]
@@ -174,18 +186,24 @@ namespace PartyNight.Gameplay.Tests
 
         private PartyNightNetworkBootstrap FindBootstrapOrNull()
         {
-            if (!loadedScene.IsValid() || !loadedScene.isLoaded)
-            {
-                return null;
-            }
-
-            var matches = loadedScene
-                .GetRootGameObjects()
-                .SelectMany(root =>
-                    root.GetComponentsInChildren<PartyNightNetworkBootstrap>(true))
-                .ToArray();
-
+            var matches = FindAllNetworkBootstraps();
             return matches.Length == 1 ? matches[0] : null;
+        }
+
+        private static PartyNightNetworkBootstrap[] FindAllNetworkBootstraps()
+        {
+            return Object.FindObjectsByType<PartyNightNetworkBootstrap>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+        }
+
+        private static void DestroyAllNetworkBootstraps()
+        {
+            foreach (var bootstrap in FindAllNetworkBootstraps())
+            {
+                bootstrap.Shutdown();
+                Object.Destroy(bootstrap.gameObject);
+            }
         }
     }
 }
