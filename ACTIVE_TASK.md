@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/server-authoritative-movement`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY VALIDATION PENDING**
+**IMPLEMENTED — STATIC REVALIDATION PENDING AFTER BUILD #22 TEST CONTRACT FIX**
 
 ## Prior validated checkpoint
 
@@ -178,9 +178,55 @@ Before merge:
 GitHub static workflow #133:
 **PASS**
 
+## Build #22 findings
+
+Unity Build Automation Build #22 correctly checked out:
+
+`multiplayer/server-authoritative-movement`
+
+at exact frozen revision:
+
+`b4b6fa11bd979101321b3d19487f558187af5db6`
+
+Unity version:
+`6000.3.24f1 (4e7b9b5b6244)`
+
+Confirmed:
+- Edit Mode exited 0;
+- NGO RPC/NetworkVariable code compiled and Play Mode executed;
+- all three new authoritative-movement tests passed;
+- `CanonicalNetworkPlayerUsesExistingCharacterMotor` passed;
+- `ServerMovesSpawnedPlayerThroughCanonicalMotor` passed;
+- `ServerRejectsInvalidDuplicateAndStaleMovementIntent` passed;
+- Hotbox and local-player tests passed;
+- the real Unity visual capture succeeded;
+- exactly one Play Mode test failed;
+- Linux Player export did not run because Play Mode exited 2.
+
+Sole failure:
+`NetworkingRuntimeTests.FoundationConfiguresCanonicalNetworkPlayerPrefab`
+
+The old player-spawn milestone test still asserted that the canonical network prefab
+must have no `CharacterController` or `PartyNightCharacterMotor`. That expectation was
+intentionally superseded by this movement milestone, which upgrades the same canonical
+prefab to contain one CharacterController, the existing PartyNightCharacterMotor and
+one PartyNightNetworkMovement bridge.
+
+This was a stale regression test, not a movement/runtime failure.
+
+Correction:
+- update the old canonical-prefab test to require CharacterController;
+- require the existing PartyNightCharacterMotor;
+- require PartyNightNetworkMovement;
+- continue forbidding PartyNightLocalPlayerController on the network prefab;
+- add static guards for those evolved assertions.
+
+No movement implementation, authority rule, Hotbox logic, camera logic, transport,
+package version or prefab hash was changed in response to Build #22.
+
 ## Next step
 
-Freeze the exact static-green head, then spend one Unity Build Automation run on the
-complete movement slice. Unity must compile NGO RPC/NetworkVariable ILPP, preserve all
-existing tests, pass the new server-authoritative movement tests, validate the exact
-visual artifact and export the Linux Player before this task can merge.
+Pass GitHub static CI on the Build #22 stale-test correction, inspect the exact delta,
+and freeze the new head. Then spend one Unity Build Automation run on that frozen SHA.
+The expected Play Mode count remains 17, with all 17 required to pass before visual
+validation and Linux export can count.
