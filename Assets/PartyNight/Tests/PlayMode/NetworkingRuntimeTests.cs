@@ -147,13 +147,22 @@ namespace PartyNight.Gameplay.Tests
             Assert.That(identities, Has.Length.EqualTo(1));
             Assert.That(identities[0].gameObject, Is.SameAs(playerPrefab));
 
-            Assert.That(playerPrefab.GetComponent<CharacterController>(), Is.Null);
+            Assert.That(
+                playerPrefab.GetComponent<CharacterController>(),
+                Is.Not.Null,
+                "Canonical network player now requires the authoritative CharacterController.");
             Assert.That(
                 playerPrefab.GetComponent<PartyNightCharacterMotor>(),
-                Is.Null);
+                Is.Not.Null,
+                "Canonical network player must reuse PartyNightCharacterMotor.");
+            Assert.That(
+                playerPrefab.GetComponent<PartyNightNetworkMovement>(),
+                Is.Not.Null,
+                "Canonical network player requires the server-authoritative movement bridge.");
             Assert.That(
                 playerPrefab.GetComponent<PartyNightLocalPlayerController>(),
-                Is.Null);
+                Is.Null,
+                "Network player must not duplicate the local input controller.");
         }
 
         [Test]
