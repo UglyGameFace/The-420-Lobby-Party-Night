@@ -18,6 +18,9 @@ namespace PartyNight.Gameplay
         private PartyNightOrbitCamera orbitCamera;
         private PartyNightLocalPlayerController localController;
         private HotboxHavocPrototype hotboxPrototype;
+        [SerializeField]
+        private GameObject networkPlayerPrefab;
+
         private PartyNightNetworkBootstrap networkBootstrap;
 
         public bool IsComposed => runtimeRoot != null;
@@ -27,6 +30,7 @@ namespace PartyNight.Gameplay
         public PartyNightLocalPlayerController LocalController => localController;
         public HotboxHavocPrototype HotboxPrototype => hotboxPrototype;
         public PartyNightNetworkBootstrap NetworkBootstrap => networkBootstrap;
+        public GameObject NetworkPlayerPrefab => networkPlayerPrefab;
 
         private void Awake()
         {
@@ -64,6 +68,7 @@ namespace PartyNight.Gameplay
                 newNetworkBootstrap =
                     PartyNightNetworkBootstrap.GetOrCreateRuntime(
                         out createdNetworkBootstrap);
+                newNetworkBootstrap.ConfigurePlayerPrefab(networkPlayerPrefab);
 
                 newGround = new GameObject(GroundName);
                 newGround.transform.SetParent(newRuntimeRoot.transform, false);
