@@ -681,6 +681,10 @@ def validate_networking_foundation() -> None:
     required_bootstrap_tokens = (
         "NetworkManager",
         "UnityTransport",
+        "GetOrCreateRuntime",
+        "runtimeObject.SetActive(false)",
+        "networkManager.NetworkConfig = new NetworkConfig()",
+        "runtimeObject.SetActive(true)",
         "StartDedicatedServer",
         "StartServer()",
         "StartClient",
@@ -710,27 +714,32 @@ def validate_networking_foundation() -> None:
     )
     composition_requirements = (
         "PartyNightNetworkBootstrap",
-        "PartyNightNetworkBootstrap.RuntimeName",
-        "AddComponent<PartyNightNetworkBootstrap>()",
-        "newNetworkBootstrap.Initialize()",
+        "PartyNightNetworkBootstrap.GetOrCreateRuntime(",
         "NetworkBootstrap => networkBootstrap",
+        "createdNetworkBootstrap",
     )
     for token in composition_requirements:
         if token not in composition:
             fail(f"foundation composition missing networking ownership: {token}")
 
-    if "newNetworkObject.transform.SetParent" in composition:
-        fail("NGO NetworkManager bootstrap must remain a scene-root GameObject")
-    if "SceneManager.MoveGameObjectToScene(" not in composition:
-        fail("network bootstrap must be explicitly owned by the foundation scene")
+    if "SetParent" in bootstrap:
+        fail("NGO NetworkManager bootstrap must remain a root GameObject")
+    if "SceneManager.MoveGameObjectToScene(" in composition:
+        fail(
+            "persistent NGO bootstrap must not be rebound to a gameplay scene after "
+            "NetworkManager activation"
+        )
 
     tests = read_required(
         "Assets/PartyNight/Tests/PlayMode/NetworkingRuntimeTests.cs"
     )
     required_tests = (
         "FoundationSceneComposesExactlyOneNetworkBootstrap",
+        "FindAllNetworkBootstraps",
+        "DestroyAllNetworkBootstraps",
+        "NetworkManager.Singleton",
+        "NetworkConfig.NetworkTransport",
         "transform.parent",
-        "gameObject.scene.handle",
         "DefaultFoundationSceneIsNotAuthoritative",
         "DedicatedServerStartsWithoutBecomingAClient",
         "StartDedicatedServer(TestServerPort)",
