@@ -1,9 +1,9 @@
 {
-  "name": "PartyNight.Gameplay",
-  "rootNamespace": "PartyNight.Gameplay",
+  "name": "PartyNight.Networking",
+  "rootNamespace": "PartyNight.Networking",
   "references": [
-    "PartyNight.Input",
-    "PartyNight.Networking"
+    "Unity.Netcode.Runtime",
+    "Unity.Networking.Transport"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -11,9 +11,7 @@
   "overrideReferences": false,
   "precompiledReferences": [],
   "autoReferenced": true,
-  "defineConstraints": [
-    "ENABLE_INPUT_SYSTEM"
-  ],
+  "defineConstraints": [],
   "versionDefines": [],
   "noEngineReferences": false
 }

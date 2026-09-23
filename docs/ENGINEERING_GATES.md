@@ -177,6 +177,9 @@ Server owns important state:
 
 Clients send intent. Clients do not decide wins, scores, eliminations, inventory, or privileged actions.
 
+Party Night uses dedicated-server authority. Runtime code must not introduce an NGO
+`StartHost()` path that makes a player's client the authoritative match server.
+
 Every multiplayer milestone eventually requires tests for:
 - multiple clients;
 - join/leave;

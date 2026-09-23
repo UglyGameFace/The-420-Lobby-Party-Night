@@ -4,7 +4,10 @@
   "references": [
     "PartyNight.Gameplay",
     "PartyNight.Input",
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "PartyNight.Networking",
+    "Unity.Netcode.Runtime",
+    "Unity.Networking.Transport"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
