@@ -271,6 +271,13 @@ Dedicated-server builds use the `UNITY_SERVER` path to autostart the server role
 Normal desktop/mobile/Web clients remain non-authoritative unless explicitly started as
 clients.
 
+The NGO `NetworkManager` is a root-level persistent session object. Runtime creation
+configures `NetworkConfig` and Unity Transport while the object is inactive, then
+activates it so NGO can perform its normal singleton/`DontDestroyOnLoad` lifecycle.
+Gameplay composition obtains that shared bootstrap but does not parent it or own the
+network session lifetime. Re-entering a gameplay scene reuses the single bootstrap
+instead of creating a second NetworkManager.
+
 This foundation proves session ownership only. Network player spawning, movement
 replication/prediction, server-owned Hotbox round state, lobby/matchmaking, reconnect,
 and WebSocket/WSS validation remain later milestones.
