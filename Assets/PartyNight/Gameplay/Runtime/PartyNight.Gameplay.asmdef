@@ -3,7 +3,8 @@
   "rootNamespace": "PartyNight.Gameplay",
   "references": [
     "PartyNight.Input",
-    "PartyNight.Networking"
+    "PartyNight.Networking",
+    "Unity.Netcode.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
