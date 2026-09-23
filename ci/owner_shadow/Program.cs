@@ -358,6 +358,10 @@ internal static class Program
             70);
         Check(rig.Bridge.IsBound, "disconnect test binds owner");
 
+        // Simulate a transport/shutdown ordering where NGO has already cleared
+        // the client role before the disconnect event reaches Party Night.
+        rig.NetworkManager.IsClient = false;
+
         rig.NetworkManager.RaiseConnectionEvent(
             ConnectionEvent.ClientDisconnected,
             70);
