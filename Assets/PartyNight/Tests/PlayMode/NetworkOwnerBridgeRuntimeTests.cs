@@ -119,6 +119,10 @@ namespace PartyNight.Gameplay.Tests
             Assert.That(
                 composition.LocalController.AutomaticMotorControlEnabled,
                 Is.True);
+            Assert.That(
+                composition.LocalPlayer.GetComponent<CharacterController>().enabled,
+                Is.True,
+                "Standalone CharacterController must return only after the network session ends.");
             Assert.That(composition.HotboxPrototype.gameObject.activeSelf, Is.True);
             Assert.That(
                 composition.OrbitCamera.Target,
@@ -146,6 +150,10 @@ namespace PartyNight.Gameplay.Tests
             Assert.That(
                 composition.LocalController.AutomaticMotorControlEnabled,
                 Is.False);
+            Assert.That(
+                composition.LocalPlayer.GetComponent<CharacterController>().enabled,
+                Is.False,
+                "Standalone prototype collider must not interfere with authoritative network players.");
             Assert.That(composition.HotboxPrototype.gameObject.activeSelf, Is.False);
 
             bootstrap.Shutdown();
