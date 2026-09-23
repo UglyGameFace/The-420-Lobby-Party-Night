@@ -269,19 +269,21 @@ namespace PartyNight.Gameplay
             NetworkManager manager,
             ConnectionEventData eventData)
         {
-            if (!initialized ||
-                manager != networkManager ||
-                !manager.IsClient ||
-                eventData.ClientId != manager.LocalClientId)
+            if (!initialized || manager != networkManager)
             {
                 return;
             }
 
-            if (eventData.EventType == ConnectionEvent.ClientConnected)
+            if (eventData.EventType == ConnectionEvent.ClientConnected &&
+                bootstrap.Mode == PartyNightNetworkMode.Client &&
+                manager.IsClient &&
+                eventData.ClientId == manager.LocalClientId)
             {
                 TryBindCurrentLocalPlayer();
             }
-            else if (eventData.EventType == ConnectionEvent.ClientDisconnected)
+            else if (
+                eventData.EventType == ConnectionEvent.ClientDisconnected &&
+                bootstrap.Mode == PartyNightNetworkMode.Client)
             {
                 ReleaseOwnedPlayer();
             }
