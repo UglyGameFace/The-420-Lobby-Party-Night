@@ -522,8 +522,14 @@ def validate_gameplay_foundation() -> None:
         "Assets/PartyNight/Gameplay/Runtime/PartyNight.Gameplay.asmdef"
     )
     gameplay_asm = json.loads(read_required(gameplay_asm_path))
-    if gameplay_asm.get("references") != ["PartyNight.Input"]:
-        fail("PartyNight.Gameplay must depend on PartyNight.Input only")
+    if gameplay_asm.get("references") != [
+        "PartyNight.Input",
+        "PartyNight.Networking",
+    ]:
+        fail(
+            "PartyNight.Gameplay must depend only on PartyNight.Input and "
+            "PartyNight.Networking"
+        )
     if "ENABLE_INPUT_SYSTEM" not in gameplay_asm.get("defineConstraints", []):
         fail("PartyNight.Gameplay must require ENABLE_INPUT_SYSTEM")
 
@@ -575,7 +581,10 @@ def validate_gameplay_foundation() -> None:
     required_playmode_refs = {
         "PartyNight.Gameplay",
         "PartyNight.Input",
+        "PartyNight.Networking",
         "Unity.InputSystem",
+        "Unity.Netcode.Runtime",
+        "Unity.Networking.Transport",
     }
     if not required_playmode_refs.issubset(playmode_refs):
         fail("PlayMode tests are missing required gameplay/input references")
@@ -635,6 +644,96 @@ def validate_gameplay_foundation() -> None:
         fail("project-wide input reader must not disable or destroy the shared Action Asset")
     if "device is Pointer" not in input_reader:
         fail("PartyNightInputReader must classify pointer delta look separately")
+
+
+
+def validate_networking_foundation() -> None:
+    networking_asm_path = (
+        "Assets/PartyNight/Networking/Runtime/PartyNight.Networking.asmdef"
+    )
+    networking_asm = json.loads(read_required(networking_asm_path))
+    networking_refs = networking_asm.get("references", [])
+    if networking_refs != [
+        "Unity.Netcode.Runtime",
+        "Unity.Networking.Transport",
+    ]:
+        fail(
+            "PartyNight.Networking must depend only on NGO runtime and Unity Transport"
+        )
+
+    for reference in networking_refs:
+        if reference.startswith("PartyNight."):
+            fail("PartyNight.Networking must not depend on another Party Night assembly")
+
+    mode = read_required(
+        "Assets/PartyNight/Networking/Runtime/PartyNightNetworkMode.cs"
+    )
+    for required_mode in ("None", "DedicatedServer", "Client"):
+        if required_mode not in mode:
+            fail(f"PartyNightNetworkMode missing {required_mode}")
+    if "Host" in mode:
+        fail("Party Night network roles must not introduce host authority")
+
+    bootstrap_path = (
+        "Assets/PartyNight/Networking/Runtime/PartyNightNetworkBootstrap.cs"
+    )
+    bootstrap = read_required(bootstrap_path)
+    required_bootstrap_tokens = (
+        "NetworkManager",
+        "UnityTransport",
+        "StartDedicatedServer",
+        "StartServer()",
+        "StartClient",
+        "Shutdown",
+        "#if UNITY_SERVER",
+        "IsAuthoritativeServer",
+    )
+    for token in required_bootstrap_tokens:
+        if token not in bootstrap:
+            fail(f"Party Night network bootstrap missing required token: {token}")
+
+    if "StartHost(" in bootstrap:
+        fail("Party Night networking must not expose NGO host-authority startup")
+    if "PartyNight.Input" in bootstrap or "Discord" in bootstrap:
+        fail("Party Night networking bootstrap crosses a forbidden runtime boundary")
+
+    party_night_root = ROOT / "Assets" / "PartyNight"
+    for source in sorted(party_night_root.rglob("*.cs")):
+        text = source.read_text(encoding="utf-8", errors="replace")
+        if "StartHost(" in text:
+            fail(
+                f"{source.relative_to(ROOT)} introduces forbidden host-authority startup"
+            )
+
+    composition = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs"
+    )
+    composition_requirements = (
+        "PartyNightNetworkBootstrap",
+        "PartyNightNetworkBootstrap.RuntimeName",
+        "AddComponent<PartyNightNetworkBootstrap>()",
+        "newNetworkBootstrap.Initialize()",
+        "NetworkBootstrap => networkBootstrap",
+    )
+    for token in composition_requirements:
+        if token not in composition:
+            fail(f"foundation composition missing networking ownership: {token}")
+
+    tests = read_required(
+        "Assets/PartyNight/Tests/PlayMode/NetworkingRuntimeTests.cs"
+    )
+    required_tests = (
+        "FoundationSceneComposesExactlyOneNetworkBootstrap",
+        "DefaultFoundationSceneIsNotAuthoritative",
+        "DedicatedServerStartsWithoutBecomingAClient",
+        "StartDedicatedServer(TestServerPort)",
+        "NetworkManager.IsServer",
+        "NetworkManager.IsClient",
+        "PARTY_NIGHT_TEST_RESULT",
+    )
+    for token in required_tests:
+        if token not in tests:
+            fail(f"networking Play Mode coverage missing: {token}")
 
 
 def validate_hotbox_havoc_prototype() -> None:
@@ -865,6 +964,7 @@ def main() -> None:
     validate_render_pipeline_assembly_references()
     validate_input_foundation()
     validate_gameplay_foundation()
+    validate_networking_foundation()
     validate_hotbox_havoc_prototype()
     validate_capture_cleanup()
     validate_build_scene()
