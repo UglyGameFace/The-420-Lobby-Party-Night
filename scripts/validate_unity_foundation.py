@@ -836,8 +836,17 @@ def validate_networking_foundation() -> None:
         fail("PartyNightNetworkPlayer must derive from NGO NetworkBehaviour")
     if "PartyNight.Gameplay" in player_script or "PartyNight.Input" in player_script:
         fail("network player identity must not depend on gameplay/input assemblies")
-    if "NetworkDespawned" not in player_script or "OnNetworkDespawn()" not in player_script:
-        fail("network player identity must expose deterministic despawn lifecycle")
+    player_despawn_contract = (
+        "public event System.Action<PartyNightNetworkPlayer> NetworkDespawned;",
+        "public override void OnNetworkDespawn()",
+        "NetworkDespawned?.Invoke(this);",
+    )
+    for token in player_despawn_contract:
+        if token not in player_script:
+            fail(
+                "network player identity must expose deterministic despawn lifecycle: "
+                + token
+            )
 
     player_prefab_path = (
         "Assets/PartyNight/Networking/Prefabs/PartyNightNetworkPlayer.prefab"
