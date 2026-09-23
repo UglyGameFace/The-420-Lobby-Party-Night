@@ -18,6 +18,7 @@ namespace PartyNight.Networking
         private bool initialized;
 
         public bool IsInitialized => initialized;
+        public event System.Action<PartyNightNetworkMode> ModeChanged;
         public NetworkManager NetworkManager => networkManager;
         public UnityTransport Transport => transport;
         public PartyNightNetworkMode Mode => mode;
@@ -92,6 +93,7 @@ namespace PartyNight.Networking
 
             networkManager.NetworkConfig.NetworkTransport = transport;
             networkManager.NetworkConfig.EnableSceneManagement = false;
+            networkManager.OnConnectionEvent += HandleConnectionEvent;
 
             mode = PartyNightNetworkMode.None;
             initialized = true;
@@ -170,7 +172,7 @@ namespace PartyNight.Networking
                 return false;
             }
 
-            mode = PartyNightNetworkMode.DedicatedServer;
+            SetMode(PartyNightNetworkMode.DedicatedServer);
             return true;
         }
 
@@ -193,7 +195,7 @@ namespace PartyNight.Networking
                 return false;
             }
 
-            mode = PartyNightNetworkMode.Client;
+            SetMode(PartyNightNetworkMode.Client);
             return true;
         }
 
@@ -204,7 +206,35 @@ namespace PartyNight.Networking
                 networkManager.Shutdown();
             }
 
-            mode = PartyNightNetworkMode.None;
+            SetMode(PartyNightNetworkMode.None);
+        }
+
+        private void HandleConnectionEvent(
+            NetworkManager manager,
+            ConnectionEventData eventData)
+        {
+            if (!initialized ||
+                manager != networkManager ||
+                mode != PartyNightNetworkMode.Client)
+            {
+                return;
+            }
+
+            if (eventData.EventType == ConnectionEvent.ClientDisconnected)
+            {
+                SetMode(PartyNightNetworkMode.None);
+            }
+        }
+
+        private void SetMode(PartyNightNetworkMode nextMode)
+        {
+            if (mode == nextMode)
+            {
+                return;
+            }
+
+            mode = nextMode;
+            ModeChanged?.Invoke(mode);
         }
 
         private void EnsureCanStart()
@@ -225,6 +255,12 @@ namespace PartyNight.Networking
         private void OnDestroy()
         {
             Shutdown();
+
+            if (networkManager != null)
+            {
+                networkManager.OnConnectionEvent -= HandleConnectionEvent;
+            }
+
             initialized = false;
         }
     }

@@ -7,8 +7,16 @@ namespace PartyNight.Networking
     [RequireComponent(typeof(NetworkObject))]
     public sealed class PartyNightNetworkPlayer : NetworkBehaviour
     {
+        public event System.Action<PartyNightNetworkPlayer> NetworkDespawned;
+
         public bool IsLocallyOwnedPlayer => IsSpawned && IsOwner;
         public bool IsServerAuthoritativePlayer =>
             IsSpawned && NetworkManager != null && NetworkManager.IsServer;
+
+        public override void OnNetworkDespawn()
+        {
+            NetworkDespawned?.Invoke(this);
+            base.OnNetworkDespawn();
+        }
     }
 }

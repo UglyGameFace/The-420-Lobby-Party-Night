@@ -53,6 +53,17 @@ namespace PartyNight.Gameplay
             SnapNow();
         }
 
+        public void Retarget(Transform followTarget)
+        {
+            if (followTarget == null)
+            {
+                throw new System.ArgumentNullException(nameof(followTarget));
+            }
+
+            target = followTarget;
+            SnapNow();
+        }
+
         public void SetOrbit(float yaw, float pitch)
         {
             yawDegrees = NormalizeAngle(yaw);

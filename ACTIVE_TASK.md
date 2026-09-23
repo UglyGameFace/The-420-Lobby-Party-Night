@@ -2,166 +2,247 @@
 
 ## Task
 
-**Server-authoritative network movement + ownership bridge**
+**Owned network player input + camera handoff**
+
+GitHub issue:
+#11
+
+Pull request:
+#14 — `Add owned network player input and camera handoff`
 
 ## Status
 
-**CLOSED — VALIDATED, MERGED, POST-MERGE GREEN**
+**IMPLEMENTED — STATIC + OWNER-SHADOW + MUTATION PASS; FINAL EXACT-HEAD FREEZE PENDING**
 
-## Scope
+## Base
 
-The canonical NGO network player now supports server-authoritative
-CharacterController movement without introducing a second movement implementation.
+Main closeout head:
+`36886705326be69ec5cebb056968896a1bc690b0`
 
-Clients submit movement intent only:
-- desired planar world direction;
-- one-shot jump request;
-- monotonic sequence.
+Prior completed milestone:
+server-authoritative network movement + ownership bridge.
 
-Clients do not submit authoritative position, rotation, velocity, grounding,
-collision, exposure, elimination, score, or other privileged state.
+## Player-visible success condition
+
+A real client connects to the dedicated server, NGO assigns its local PlayerObject,
+the existing Party Night orbit camera follows that owned player, and the existing
+keyboard/gamepad input path drives the owned player through the validated
+server-authoritative movement bridge.
+
+There must never be two competing local-control paths.
 
 ## Architecture
 
-The existing `PartyNightCharacterMotor` remains the single movement implementation.
+Canonical ownership source:
+`NetworkManager.LocalClient.PlayerObject`
 
-The canonical network player contains:
-- one NGO `NetworkObject`;
-- one `PartyNightNetworkPlayer`;
-- one `CharacterController`;
-- one existing `PartyNightCharacterMotor`;
-- one `PartyNightNetworkMovement`.
+Lifecycle:
+- use NGO `NetworkManager.OnConnectionEvent`;
+- use explicit Party Night `ModeChanged` session notifications;
+- do not poll for ownership;
+- do not discover ownership through tags, names, scene-wide searches, or a second
+  registry;
+- `PartyNightNetworkPlayer.NetworkDespawned` provides deterministic binding cleanup.
 
-Authority contract:
-- movement RPC targets the server;
-- NGO owner invocation permission is required;
-- server independently verifies sender equals `OwnerClientId`;
-- malformed, duplicate and stale/out-of-order intents are rejected;
-- accepted planar movement is clamped to unit magnitude;
-- jump is consumed once;
-- stale intent expires after 0.25 seconds;
-- only the server advances `PartyNightCharacterMotor`;
-- authoritative position/yaw NetworkVariables are server-write-only;
-- non-server clients disable CharacterController and apply replicated pose;
-- no `StartHost()` path exists.
+Input:
+- keep the existing project-wide `PartyNightInputReader`;
+- `PartyNightLocalPlayerController` remains its sole runtime owner;
+- do not add another Input Actions asset, generated wrapper, or `PlayerInput` graph;
+- outside a network session the local controller advances the standalone motor;
+- during a network session automatic standalone motor control is disabled;
+- the owner bridge consumes the same `PartyNightInputFrame`;
+- Look remains local;
+- Move is converted through the orbit-camera planar basis;
+- Jump remains one-shot intent;
+- only desired direction, jump and monotonic sequence are submitted.
 
-## Changes
+Authority:
+- `PartyNightNetworkMovement` remains the movement-authority boundary;
+- the client does not submit position, rotation, velocity, grounded state, collision
+  result, elimination state, winner state, or restart state;
+- the network prefab still does not contain `PartyNightLocalPlayerController`;
+- prediction/reconciliation remains out of scope.
 
-Implemented:
-- `Assets/PartyNight/Gameplay/Runtime/PartyNightNetworkMovement.cs`;
-- canonical network prefab evolution for authoritative movement;
-- gameplay assembly NGO reference;
-- editor/prefab validation updates;
-- Play Mode authoritative movement coverage;
-- stale previous-milestone prefab assertion correction;
-- static authority regression guards;
-- validator mutation hardening for stale/inverted assertions;
-- architecture/readme documentation.
+Session suppression:
+- any active client or dedicated-server session disables standalone automatic motor
+  control;
+- the standalone CharacterController is disabled so its collider cannot interfere with
+  authoritative network players;
+- the local prototype round object is inactive during network sessions;
+- owned-player despawn releases the binding but does not restore local authority while
+  the session remains active;
+- disconnect/shutdown restores the standalone controller, collider, camera target and
+  local prototype state.
 
-No local input/camera ownership wiring, prediction/reconciliation, remote character
-presentation, or server-owned Hotbox rules were added in this task.
+Disconnect cleanup uses Party Night's own Client mode as the lifecycle truth. It does
+not require NGO `IsClient` to remain true at the instant `ClientDisconnected` is
+delivered.
+
+## Implemented
+
+- added `PartyNightNetworkOwnerBridge`;
+- added one `ModeChanged` event to `PartyNightNetworkBootstrap`;
+- bootstrap now listens to NGO `OnConnectionEvent`;
+- bootstrap clears Client mode on local client disconnect;
+- network player exposes deterministic `NetworkDespawned`;
+- local controller exposes its existing logical input frame without creating another
+  input reader;
+- local controller can suspend automatic standalone motor control;
+- orbit camera can retarget without resetting current yaw/pitch;
+- foundation composition creates exactly one owner bridge;
+- owner bridge binds only NGO `LocalClient.PlayerObject`;
+- owner binding validates spawned/local ownership and LocalClientId;
+- Move is camera-relative and clamped;
+- Look remains local;
+- successful movement-intent submission advances a uint sequence;
+- standalone motor, collider and local prototype round authority are suppressed for
+  active network sessions;
+- standalone mode restores cleanly on disconnect/shutdown;
+- Play Mode coverage added for standalone baseline, dedicated-server
+  suppression/restoration, camera-relative input, and network-player despawn lifecycle;
+- static guards added for ownership, input uniqueness, session suppression, host
+  exclusion and client-authority boundaries;
+- architecture and README documentation updated.
+
+## Zero-Unity validation
+
+Runtime implementation head before documentation-only commits:
+`0e31c65d509df767d6185cd693a1c265d6870395`
+
+GitHub static workflow #160:
+**PASS**
+
+Owner-handoff shadow runtime on exact runtime implementation head:
+- actual production source compile: **0 warnings, 0 errors**;
+- owner-handoff runtime checks: **56/56 PASS**;
+- owner-handoff mutation guards: **11/11 PASS**.
+
+The shadow harness compiles the actual production sources for:
+- input-frame/look-mode contract;
+- CharacterController motor;
+- orbit camera;
+- local player controller;
+- network movement;
+- network owner bridge;
+- network mode/bootstrap/player identity.
+
+It uses strict Unity/NGO stubs only for engine plumbing and then exercises session,
+ownership, camera, input and disconnect behavior.
 
 ## Findings
 
-Unity Build #22 validated the movement runtime itself but exposed one stale
-previous-milestone regression assertion:
-`NetworkingRuntimeTests.FoundationConfiguresCanonicalNetworkPlayerPrefab`
-still expected no CharacterController/motor.
+### Standalone collision interference
 
-That stale expectation was corrected without changing movement runtime behavior.
+Initial handoff suppression disabled standalone motor control and local round authority,
+but left the standalone CharacterController enabled.
 
-Zero-quota mutation testing then exposed a static-validator blind spot: the validator
-proved component assertion tokens existed but did not prove whether they used
-`Is.Null` versus `Is.Not.Null`.
+That inactive local collider could remain at the spawn area on a dedicated server and
+interfere physically with real authoritative network players.
 
-The validator now explicitly requires:
-- CharacterController: `Is.Not.Null`;
-- PartyNightCharacterMotor: `Is.Not.Null`;
-- PartyNightNetworkMovement: `Is.Not.Null`;
-- PartyNightLocalPlayerController: `Is.Null`.
+Correction:
+- disable the standalone CharacterController for every active network session;
+- restore it only when returning to no-session standalone mode;
+- Play Mode/static/shadow coverage now guards both transitions.
 
-## Validation
+### Disconnect ordering
 
-Final validated PR head:
-`1f4a7b8902cb751f16f2a6647679cdb841d92c77`
+The first implementation required `NetworkManager.IsClient` to remain true while
+processing `ClientDisconnected`.
 
-Before Unity Build #23:
-- GitHub static #140: **PASS**;
-- license-free shadow runtime: **84/84 PASS**;
-- shadow compile: **0 warnings, 0 errors**;
-- mutation guards: **9/9 PASS**;
-- full PR scope audit: **PASS**.
+NGO's normal transport path currently invokes the disconnect callback before shutdown,
+but Party Night does not need to depend on that ordering.
 
-Unity Build Automation Build #23:
-- branch: `multiplayer/server-authoritative-movement`;
-- exact revision: `1f4a7b8902cb751f16f2a6647679cdb841d92c77`;
-- Unity: `6000.3.24f1 (4e7b9b5b6244)`;
-- Edit Mode: **PASS / exit 0**;
-- Play Mode: **17/17 PASS**;
-- corrected canonical network prefab test: **PASS**;
-- all three authoritative movement tests: **PASS**;
-- exact-revision visual validation: **PASS**;
-- StandaloneLinux64 Player export: **PASS**;
-- Build Automation final result: **SUCCESS**.
+A new shadow regression deliberately clears the simulated NGO client role before
+`ClientDisconnected`:
+- previous source head `1f7cbb5384f4129da8563f1700f51a60ff374722`:
+  **FAIL**, proving the regression test detects the dependency;
+- corrected source head `0e31c65d509df767d6185cd693a1c265d6870395`:
+  **PASS**.
 
-Build #23 artifact inspection:
-- ZIP integrity: **PASS**;
-- visual manifest exact revision: **PASS**;
-- visual manifest Unity version: **PASS**;
-- visual capture: valid **1280x720 RGB PNG**, manually inspected;
-- Linux executable: valid **x86-64 ELF**;
-- `UnityPlayer.so`: valid **x86-64 ELF shared object**;
-- Party Night runtime assemblies, NGO runtime and Unity Transport present.
+Party Night now clears its Client mode from the disconnect event based on its own
+session mode, independent of the transient NGO `IsClient` value.
 
-The generated visual text says `Build result: Unknown` because it is emitted during
-post-processing before the overall Build Automation result is finalized. The
-authoritative build run ended in SUCCESS and exact-revision visual validation passed,
-so this is a non-blocking artifact-label quirk, not a build failure.
+### Static mutation blind spot
 
-## Cleanup
+The first owner mutation run found the despawn lifecycle guard used a substring check.
+A sabotage rename to `RemovedNetworkDespawned` still contained the substring
+`NetworkDespawned`.
 
-Final PR scope audit confirmed:
-- no unrelated runtime subsystem changes;
-- no cross-project runtime contamination;
-- no duplicate local movement implementation;
-- no owner-writable authoritative pose;
-- no client-authoritative position RPC;
-- no host startup path;
-- no stale/backup/temp artifact introduced on main.
+The static validator now requires the exact:
+- event declaration;
+- `OnNetworkDespawn` override;
+- event invocation.
 
-The disposable license-free shadow/GameCI probe remains outside main on its isolated
-CI branch and is not part of the shipped project.
+The hardened mutation run rejects all 11 deliberate regressions.
+
+## Play Mode validation target
+
+Existing Play Mode result count from Build #23:
+17.
+
+New owner-handoff Play Mode tests:
+4.
+
+Exact expected Play Mode result count for this milestone:
+**21**
+
+Unity validation must prove all 21 pass.
+
+## Explicitly out of scope
+
+Do not implement in this task:
+- two-client replication proof (#12);
+- client prediction/reconciliation;
+- smoothing redesign;
+- server-owned round rules (#13);
+- networked Interact/Grab/Dash/UseItem/Emote;
+- final character art/animation;
+- matchmaking/lobby/reconnect;
+- persistence/Discord/production hosting.
+
+## Validation plan
+
+Before Unity Build Automation:
+1. update this ledger and architecture docs;
+2. static CI passes on the final exact head;
+3. owner shadow compile/runtime passes on the final exact head;
+4. 11/11 owner mutation guards pass on the final exact head;
+5. final diff/scope/cleanup audit passes;
+6. freeze the exact head.
+
+Unity validation then must prove:
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- Edit Mode exit 0;
+- exactly 21 Play Mode results;
+- all 21 Passed;
+- all existing 17 regression tests remain green;
+- all four new owner-handoff tests pass;
+- exact-revision visual validation remains intact;
+- Linux Player export succeeds;
+- artifact inspection passes.
+
+PR #14 remains draft until those Unity/artifact gates pass.
 
 ## Conflicts / blockers
 
-None for the completed task.
-
-## Git state
-
-PR #10:
-**MERGED**
-
-Squash merge on main:
-`b67656d19fcbd8a955a829e7c51694137631b4be`
-
-Post-merge GitHub static workflow #141:
-**PASS**
+None currently.
 
 ## Backlog
 
-Queued player-facing progression:
-1. #11 — owned network player input + camera handoff;
-2. #12 — two-client ownership + replicated movement proof;
-3. #13 — server-owned Hotbox Havoc multiplayer round.
+After this task closes:
+1. #12 — two-client ownership + replicated movement proof;
+2. #13 — server-owned Hotbox Havoc multiplayer round.
 
-Important constraint for #11:
-the current local Hotbox prototype must not be rebound to a network player as
-client-authoritative game logic. Network sessions suspend that local authority until
-Hotbox rules migrate to the dedicated server in #13.
+## Git state
+
+Working branch:
+`multiplayer/owned-player-input-camera`
+
+PR:
+#14, draft.
 
 ## Next step
 
-After this closeout-only commit passes its final static workflow, activate #11 as the
-new Single Active Task:
-
-**owned network player input + camera handoff**
+Freeze the final documentation-complete head, rerun static + owner-shadow + mutation
+validation against that exact SHA, audit the final diff, then use one Unity Build
+Automation run for the complete milestone.

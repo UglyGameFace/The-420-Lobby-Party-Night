@@ -345,7 +345,60 @@ Non-authoritative clients apply the replicated pose directly for this milestone.
 Movement intent expires after a short timeout so packet loss/disconnects cannot leave a
 player moving forever from stale input. Jump input is consumed once on the server.
 
-Client prediction, reconciliation and smoothing are deliberately deferred until this
-authority kernel is proven. Local owner camera/input rebinding is also deferred, so the
-current milestone validates the movement authority path rather than pretending the full
-client experience is already complete.
+Client prediction, reconciliation and smoothing remain deliberately deferred. The
+subsequent owned-player handoff milestone reuses this authority kernel rather than
+changing its RPC or server-simulation contract.
+
+
+## Owned network player input and camera handoff
+
+The client-control handoff keeps one input system and one camera rather than creating
+parallel local/network implementations.
+
+`PartyNightLocalPlayerController` remains the sole owner of the project-wide
+`PartyNightInputReader`. Outside a network session it continues to drive the standalone
+prototype motor exactly as before. During any active network session its automatic motor
+control is disabled, while `PartyNightNetworkOwnerBridge` consumes the same logical
+`PartyNightInputFrame`.
+
+The canonical local network player is obtained only from:
+
+`NetworkManager.LocalClient.PlayerObject`
+
+Ownership is not inferred from scene searches, object names, tags, or a second registry.
+The handoff listens to NGO `NetworkManager.OnConnectionEvent` plus explicit Party Night
+session-mode changes.
+
+For an owned client player:
+- Look remains local and updates the existing orbit camera immediately;
+- Move is converted through the orbit camera's planar right/forward basis;
+- Jump is forwarded as a one-shot intent;
+- the client submits only desired movement direction, jump and a monotonic sequence to
+  the existing `PartyNightNetworkMovement`;
+- the one existing orbit camera retargets to the owned PlayerObject without resetting
+  the current view angle.
+
+The owner bridge never writes authoritative player position, rotation, velocity,
+grounding or collision state.
+
+Network-session suppression is explicit. While either a dedicated-server or client
+session is active:
+- standalone automatic motor control is disabled;
+- the standalone CharacterController is disabled so its collider cannot interfere with
+  authoritative network players;
+- the local Hotbox prototype GameObject is inactive, preventing local exposure,
+  elimination, win, restart or teleport logic from masquerading as network authority.
+
+If an owned PlayerObject despawns, the binding is released without re-enabling local
+gameplay authority while the session remains active. A local client disconnect or
+explicit session shutdown returns Party Night to standalone prototype mode, restores
+the standalone CharacterController/input path, retargets the camera, and restarts the
+local Hotbox round cleanly.
+
+The disconnect cleanup is keyed to Party Night's own Client session mode rather than
+requiring NGO's `IsClient` flag to remain true during the disconnect callback. This
+keeps cleanup robust across transport/shutdown ordering.
+
+This milestone does not make Hotbox rules network-authoritative. Server-owned round
+state remains a separate milestone after two-client ownership/replication is proven.
+Prediction/reconciliation and remote-player presentation also remain subsequent work.
