@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/network-player-spawning`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY VALIDATION PENDING**
+**CLOSED — MERGED AND POST-MERGE VALIDATED**
 
 ## Prior validated checkpoint
 
@@ -140,9 +140,62 @@ Before merge:
 GitHub static workflow #120:
 **PASS**
 
+## Build #21 final validation
+
+Unity Build Automation Build #21 checked out exact validated revision:
+
+`502388737615d4d0e62ce866dc9a315c8e52cb91`
+
+Confirmed:
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- Edit Mode exited 0;
+- Play Mode exited 0;
+- all 14 Party Night Play Mode tests passed;
+- all five Hotbox Havoc tests passed;
+- all five local-player/movement tests passed;
+- all four networking/player-prefab tests passed;
+- canonical player prefab configuration passed;
+- dedicated-server startup registered the configured player prefab;
+- dedicated server remained server-only/non-host;
+- default scene remained non-authoritative and spawned no network player;
+- real 1280x720 Unity PNG capture succeeded;
+- exact-revision visual evidence validation passed before and after Player export;
+- Linux Player export completed successfully;
+- overall Unity Build Automation result was SUCCESS.
+
+Downloaded Build #21 artifact:
+- ZIP integrity passed;
+- manifest revision matched the exact validated SHA;
+- manifest Unity version was `6000.3.24f1`;
+- manifest dimensions were 1280x720;
+- Linux runtime payload was present, including `UnityPlayer.so`;
+- PNG was manually inspected and showed the expected engineering Hotbox scene with no
+  missing-texture corruption or new visual regression.
+
+## Merge and closeout
+
+Validated PR head:
+`502388737615d4d0e62ce866dc9a315c8e52cb91`
+
+PR #9 was marked ready only after Build #21 and artifact inspection.
+
+Squash merge commit on `main`:
+`38bbcd3903e1d89178db33eff548bed94bec9a40`
+
+The squash merge used expected-head protection and its 15-file content delta matched
+the exact validated PR delta.
+
+Post-merge GitHub static workflow #122:
+**PASS**
+
+This active task is complete. The canonical network-player prefab + server-owned spawn
+contract is merged to `main`. The task lock may be released after this closeout commit
+itself passes static validation.
+
 ## Next step
 
-Freeze the exact static-green head, then run Unity Build Automation. Unity must import
-the canonical prefab with a non-zero NGO hash, pass Edit Mode and all existing/new Play
-Mode tests, prove player-prefab registration on server startup, preserve exact-revision
-visual validation, and export the Linux Player before this task can merge.
+None for this closed task.
+
+After the closeout commit passes static validation, create a new ACTIVE_TASK entry for
+the next Party Night multiplayer milestone. Do not reopen or redesign this completed
+player-spawn foundation unless a verified regression requires it.
