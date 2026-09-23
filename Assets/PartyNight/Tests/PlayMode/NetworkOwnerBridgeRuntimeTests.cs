@@ -167,6 +167,10 @@ namespace PartyNight.Gameplay.Tests
             Assert.That(
                 composition.LocalController.AutomaticMotorControlEnabled,
                 Is.True);
+            Assert.That(
+                composition.LocalPlayer.GetComponent<CharacterController>().enabled,
+                Is.True,
+                "Standalone CharacterController must be restored when the network session ends.");
             Assert.That(composition.HotboxPrototype.gameObject.activeSelf, Is.True);
             Assert.That(
                 composition.OrbitCamera.Target,
