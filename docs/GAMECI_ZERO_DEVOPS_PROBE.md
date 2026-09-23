@@ -23,7 +23,14 @@ Workflow:
 
 `.github/workflows/gameci-unity-probe.yml`
 
-The workflow is manual-only.
+The workflow is isolated from normal development.
+
+It can be started in two ways:
+- manual dispatch where GitHub exposes the branch workflow;
+- a push that changes only `.github/gameci-trigger` on `ci/gameci-unity-probe`.
+
+The sentinel trigger exists so the probe can be launched without merging the workflow
+to `main` and without touching PR #10.
 
 It:
 1. checks out the exact frozen PR #10 SHA;
@@ -77,7 +84,8 @@ the occasional official confirmation path while GameCI handles development valid
 
 ## Quota discipline
 
-The workflow is manual-only.
+Normal commits on the probe branch do not launch Unity. Only the explicit sentinel path
+(or an available manual dispatch) does.
 
 Do not run it for every commit.
 
@@ -85,3 +93,17 @@ Freeze a meaningful implementation head first, then run one validation.
 
 Artifacts use one-day retention and the full Linux Player is not uploaded, minimizing
 GitHub Actions storage use.
+
+
+## Self-hosted runner note
+
+GitHub self-hosted runners do not consume GitHub-hosted Actions minutes, and a PC with
+Unity already activated could run the editor directly.
+
+Do not attach the user's everyday Windows PC as a general self-hosted runner to this
+public repository as the default solution. GitHub warns that public-repository fork/PR
+workflows can create a code-execution risk for self-hosted machines.
+
+The hosted GameCI probe is therefore the safer first route for this public repository.
+If a self-hosted runner is ever introduced, it must be isolated and locked down rather
+than using the user's normal desktop as an unrestricted runner.
