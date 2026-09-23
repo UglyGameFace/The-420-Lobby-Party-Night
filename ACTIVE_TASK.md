@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/authoritative-foundation`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING AFTER BUILD #19 NGO CONFIG FIX**
+**CLOSED — MERGED AND POST-MERGE VALIDATED**
 
 ## Prior validated checkpoint
 
@@ -228,10 +228,63 @@ Correction:
 
 No Hotbox rules, movement, input, camera, package versions, or authority model changed.
 
+## Build #20 final validation
+
+Unity Build Automation Build #20 checked out exact validated revision:
+
+`e7c596c9b5a2c06c72e36c9e3f1f793b89ea59c9`
+
+Confirmed:
+- Unity `6000.3.24f1 (4e7b9b5b6244)`;
+- Edit Mode exited 0;
+- Play Mode exited 0;
+- all 13 Party Night Play Mode tests passed;
+- all five Hotbox Havoc tests passed;
+- all five local-player/movement tests passed;
+- all three networking foundation tests passed;
+- dedicated-server NGO startup/shutdown passed;
+- dedicated server was server-only and did not become a client/host;
+- default foundation scene remained non-authoritative;
+- one configured persistent NGO bootstrap/singleton was present;
+- previous nested-NetworkManager and null-NetworkConfig failures were absent;
+- real 1280x720 Unity PNG capture succeeded;
+- exact-revision visual evidence validation passed before and after Player export;
+- Linux Player export completed successfully;
+- overall Unity Build Automation result was SUCCESS.
+
+Downloaded Build #20 artifact:
+- ZIP integrity passed;
+- manifest revision matched the exact validated SHA;
+- manifest Unity version was `6000.3.24f1`;
+- manifest dimensions were 1280x720;
+- Linux runtime files were present, including `UnityPlayer.so`;
+- PNG was manually inspected and showed the expected engineering Hotbox scene with no
+  missing-texture corruption.
+
+## Merge and closeout
+
+Validated PR head:
+`e7c596c9b5a2c06c72e36c9e3f1f793b89ea59c9`
+
+PR #8 was marked ready only after Build #20 and artifact inspection.
+
+Squash merge commit on `main`:
+`b0e942ae5c90b8b65192238d1f3f54e5d43eda9f`
+
+The squash merge used expected-head protection and its 18-file content delta matched
+the exact validated PR delta.
+
+Post-merge GitHub static workflow #107:
+**PASS**
+
+This active task is complete. The authoritative multiplayer session foundation is
+merged to `main`. The task lock may be released after this closeout commit itself
+passes static validation.
+
 ## Next step
 
-Pass GitHub static CI on the Build #19 NGO configuration/lifecycle correction and review
-the exact delta. Freeze that SHA. Then run one new Unity Build Automation validation.
-The next run must reach the Party Night networking Play Mode tests, prove one configured
-NGO singleton, start/shut down a real server-only session, preserve all existing Hotbox
-and movement tests, validate exact-revision visual evidence, and export the Linux Player.
+None for this closed task.
+
+After the closeout commit passes static validation, create a new ACTIVE_TASK entry for
+the next Party Night multiplayer milestone. Do not reopen or redesign this completed
+network-session foundation unless a verified regression requires it.
