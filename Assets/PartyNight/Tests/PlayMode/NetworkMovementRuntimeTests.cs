@@ -74,7 +74,8 @@ namespace PartyNight.Gameplay.Tests
                 var networkObject = spawnedPlayer.GetComponent<NetworkObject>();
                 if (networkObject != null &&
                     networkObject.IsSpawned &&
-                    networkObject.IsServer)
+                    NetworkManager.Singleton != null &&
+                    NetworkManager.Singleton.IsServer)
                 {
                     networkObject.Despawn(true);
                 }
@@ -273,9 +274,11 @@ namespace PartyNight.Gameplay.Tests
             networkObject.Spawn();
             yield return null;
 
+            var movement = spawnedPlayer.GetComponent<PartyNightNetworkMovement>();
+
             Assert.That(networkObject.IsSpawned, Is.True);
-            Assert.That(networkObject.IsServer, Is.True);
-            Assert.That(networkObject.IsClient, Is.False);
+            Assert.That(movement.IsServer, Is.True);
+            Assert.That(movement.IsClient, Is.False);
         }
 
         private FoundationSceneComposition FindComposition()
