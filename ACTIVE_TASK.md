@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/network-player-spawning`
 
 State:
-**IN PROGRESS — REPOSITORY + NGO PREFAB REQUIREMENTS INSPECTED**
+**IMPLEMENTED — STATIC PASS; UNITY VALIDATION PENDING**
 
 ## Prior validated checkpoint
 
@@ -117,7 +117,32 @@ Before merge:
 13. exact-head merge protection and post-merge static validation pass;
 14. ACTIVE_TASK closes on main.
 
+## Implemented
+
+- added canonical identity-only `PartyNightNetworkPlayer.prefab`;
+- prefab root contains exactly one NGO `NetworkObject`;
+- prefab root contains exactly one `PartyNightNetworkPlayer`;
+- prefab intentionally contains no CharacterController, local motor, or local input controller;
+- foundation scene serializes the canonical prefab reference directly;
+- composition supplies the prefab to the persistent network bootstrap;
+- bootstrap validates root NetworkObject, Party Night identity and non-zero prefab hash;
+- bootstrap assigns `NetworkConfig.PlayerPrefab` before network startup;
+- reapplying the same prefab is idempotent across scene loads;
+- changing the player prefab while a session is listening is rejected;
+- Unity editor validation inspects the imported prefab contract;
+- Play Mode coverage verifies canonical prefab configuration and identity-only shape;
+- default non-authoritative scene proves configuration does not spawn a player object;
+- dedicated-server test proves NGO registers the configured player prefab at startup;
+- server-only startup proves no local player is invented without a connected client;
+- static validation guards prefab GUID, scene reference, identity, hash and movement isolation;
+- architecture/status documentation updated.
+
+GitHub static workflow #120:
+**PASS**
+
 ## Next step
 
-Implement the canonical identity-only network player prefab and wire it into the existing
-validated session bootstrap without touching local movement semantics.
+Freeze the exact static-green head, then run Unity Build Automation. Unity must import
+the canonical prefab with a non-zero NGO hash, pass Edit Mode and all existing/new Play
+Mode tests, prove player-prefab registration on server startup, preserve exact-revision
+visual validation, and export the Linux Player before this task can merge.
