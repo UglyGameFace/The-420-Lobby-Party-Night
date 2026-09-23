@@ -32,6 +32,14 @@ jobs:
           echo "GAMECI_FROZEN_REVISION=$actual"
           test "$actual" = "$FROZEN_PR10_SHA"
 
+      - name: Prove pinned Unity editor version
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fx "m_EditorVersion: 6000.3.24f1" ProjectSettings/ProjectVersion.txt
+          grep -Fx "m_EditorVersionWithRevision: 6000.3.24f1 (4e7b9b5b6244)" ProjectSettings/ProjectVersion.txt
+          echo "GAMECI_PINNED_UNITY_VERSION=PASS"
+
       - name: Unity Personal license preflight
         shell: bash
         run: |
@@ -57,8 +65,9 @@ jobs:
           UNITY_PASSWORD: ${{ env.UNITY_PASSWORD }}
         with:
           projectPath: .
-          unityVersion: 6000.3.24f1
+          unityVersion: auto
           testMode: all
+          coverageEnabled: false
           artifactsPath: artifacts
 
       - name: Build Linux Player with real Unity
@@ -126,5 +135,6 @@ jobs:
           path: |
             artifacts
             Logs
+            VisualValidation
           if-no-files-found: warn
           retention-days: 1
