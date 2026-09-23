@@ -352,6 +352,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5beee5f4dbc4d43870a8db089e7f00f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  networkPlayerPrefab: {fileID: 8021095720504756891, guid: 8bd45f93bb6f4a26a29cfe40bbd56979, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

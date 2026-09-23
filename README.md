@@ -87,4 +87,4 @@ Repository bootstrap, shared Unity foundation, the first buildable scene, author
 
 Hotbox Havoc Build #16 passed Edit Mode, all ten Play Mode tests, exact-revision visual validation, Linux Player export, and artifact inspection.
 
-The current focused implementation task is the **authoritative multiplayer foundation**: one canonical NGO + Unity Transport session bootstrap with explicit dedicated-server and client roles. Network player spawning/movement replication, server-owned Hotbox round state, lobby/matchmaking, and WebSocket validation remain subsequent tasks.
+The authoritative NGO + Unity Transport session foundation is complete and merged. The current focused implementation task is the **network player prefab + server-owned spawn contract**: one canonical identity-only NGO player prefab, explicit prefab configuration before startup, and runtime registration proof. Movement replication/prediction, remote player presentation, server-owned Hotbox state, lobby/matchmaking, and WebSocket validation remain subsequent tasks.

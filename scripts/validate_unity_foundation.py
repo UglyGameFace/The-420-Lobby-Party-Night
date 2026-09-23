@@ -730,11 +730,84 @@ def validate_networking_foundation() -> None:
             "NetworkManager activation"
         )
 
+    player_script_path = (
+        "Assets/PartyNight/Networking/Runtime/PartyNightNetworkPlayer.cs"
+    )
+    player_script = read_required(player_script_path)
+    if "NetworkBehaviour" not in player_script:
+        fail("PartyNightNetworkPlayer must derive from NGO NetworkBehaviour")
+    if "PartyNight.Gameplay" in player_script or "PartyNight.Input" in player_script:
+        fail("network player identity must not depend on gameplay/input assemblies")
+
+    player_prefab_path = (
+        "Assets/PartyNight/Networking/Prefabs/PartyNightNetworkPlayer.prefab"
+    )
+    player_prefab = read_required(player_prefab_path)
+    player_prefab_meta = read_required(player_prefab_path + ".meta")
+    if "guid: 8bd45f93bb6f4a26a29cfe40bbd56979" not in player_prefab_meta:
+        fail("canonical Party Night network player prefab GUID changed unexpectedly")
+
+    if player_prefab.count(
+        "guid: d5a57f767e5e46a458fc5d3c628d0cbb"
+    ) != 1:
+        fail("network player prefab must contain exactly one NGO NetworkObject")
+    if player_prefab.count(
+        "guid: 7e9a2e22d9a741e79208af5b3e2ecf56"
+    ) != 1:
+        fail("network player prefab must contain exactly one PartyNightNetworkPlayer")
+
+    hash_match = re.search(r"^\s*GlobalObjectIdHash:\s*(\d+)\s*$", player_prefab, re.MULTILINE)
+    if hash_match is None or int(hash_match.group(1)) == 0:
+        fail("network player prefab must carry a non-zero NGO GlobalObjectIdHash")
+
+    if "--- !u!143 " in player_prefab:
+        fail("identity-only network player prefab must not contain CharacterController")
+    for forbidden_guid in (
+        "fdb946e14e514ce5b09a2c210f23fb64",
+        "6957627954ac480aa3c298aeddf141b4",
+    ):
+        if forbidden_guid in player_prefab:
+            fail("identity-only network player prefab duplicates local movement/input code")
+
+    scene = read_required("Assets/PartyNight/Scenes/PartyNightFoundation.unity")
+    expected_player_ref = (
+        "networkPlayerPrefab: {fileID: 8021095720504756891, "
+        "guid: 8bd45f93bb6f4a26a29cfe40bbd56979, type: 3}"
+    )
+    if expected_player_ref not in scene:
+        fail("foundation scene must serialize the canonical network player prefab")
+
+    player_composition_requirements = (
+        "[SerializeField]",
+        "private GameObject networkPlayerPrefab;",
+        "NetworkPlayerPrefab => networkPlayerPrefab",
+        "ConfigurePlayerPrefab(networkPlayerPrefab)",
+    )
+    for token in player_composition_requirements:
+        if token not in composition:
+            fail(f"foundation composition missing player prefab ownership: {token}")
+
+    player_bootstrap_requirements = (
+        "ConfigurePlayerPrefab(GameObject playerPrefab)",
+        "networkManager.NetworkConfig.PlayerPrefab = playerPrefab;",
+        "PartyNightNetworkPlayer",
+        "PrefabIdHash == 0",
+        "networkManager.IsListening",
+    )
+    for token in player_bootstrap_requirements:
+        if token not in bootstrap:
+            fail(f"network bootstrap missing player-prefab contract: {token}")
+
     tests = read_required(
         "Assets/PartyNight/Tests/PlayMode/NetworkingRuntimeTests.cs"
     )
     required_tests = (
         "FoundationSceneComposesExactlyOneNetworkBootstrap",
+        "FoundationConfiguresCanonicalNetworkPlayerPrefab",
+        "FindAllNetworkPlayers",
+        "NetworkConfig.PlayerPrefab",
+        "NetworkConfig.Prefabs.Prefabs.Any",
+        "PrefabIdHash",
         "FindAllNetworkBootstraps",
         "DestroyAllNetworkBootstraps",
         "NetworkManager.Singleton",

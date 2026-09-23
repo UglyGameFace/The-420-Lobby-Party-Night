@@ -7,7 +7,9 @@
     "PartyNight.Input",
     "Unity.InputSystem",
     "Unity.RenderPipelines.Core.Runtime",
-    "Unity.RenderPipelines.Universal.Runtime"
+    "Unity.RenderPipelines.Universal.Runtime",
+    "PartyNight.Networking",
+    "Unity.Netcode.Runtime"
   ],
   "includePlatforms": [
     "Editor"

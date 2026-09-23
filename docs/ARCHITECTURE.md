@@ -281,3 +281,34 @@ instead of creating a second NetworkManager.
 This foundation proves session ownership only. Network player spawning, movement
 replication/prediction, server-owned Hotbox round state, lobby/matchmaking, reconnect,
 and WebSocket/WSS validation remain later milestones.
+
+
+## Network player prefab and spawn contract
+
+The canonical Party Night network player is a checked-in NGO prefab at:
+
+`Assets/PartyNight/Networking/Prefabs/PartyNightNetworkPlayer.prefab`
+
+The prefab is intentionally identity-only:
+- exactly one root `NetworkObject`;
+- exactly one `PartyNightNetworkPlayer`;
+- no `CharacterController`;
+- no `PartyNightCharacterMotor`;
+- no `PartyNightLocalPlayerController`.
+
+The local gameplay rig remains the only movement/input implementation until the
+movement-replication milestone deliberately connects local intent to network authority.
+
+`FoundationSceneComposition` owns the serialized prefab reference and supplies it to
+the persistent `PartyNightNetworkBootstrap`. The bootstrap validates the prefab and
+assigns it to `NetworkConfig.PlayerPrefab` before session startup.
+
+The configuration is idempotent for the same prefab across gameplay scene loads, but a
+different player prefab cannot be substituted while the network session is listening.
+
+On NGO startup, `RegisterPlayerPrefab()` registers the configured player prefab in the
+runtime network-prefab collection. A server-only session does not create a local player
+object by itself; actual player objects are created only for connected clients.
+
+Movement replication, prediction/reconciliation, remote presentation and server-owned
+Hotbox state remain subsequent milestones.

@@ -124,6 +124,39 @@ namespace PartyNight.Gameplay.Tests
         }
 
         [Test]
+        public void FoundationConfiguresCanonicalNetworkPlayerPrefab()
+        {
+            var composition = FindComposition();
+            var bootstrap = FindBootstrap();
+            var playerPrefab = composition.NetworkPlayerPrefab;
+
+            Assert.That(playerPrefab, Is.Not.Null);
+            Assert.That(bootstrap.PlayerPrefab, Is.SameAs(playerPrefab));
+
+            var networkObjects =
+                playerPrefab.GetComponentsInChildren<NetworkObject>(true);
+            Assert.That(networkObjects, Has.Length.EqualTo(1));
+            Assert.That(networkObjects[0].gameObject, Is.SameAs(playerPrefab));
+            Assert.That(
+                networkObjects[0].PrefabIdHash,
+                Is.Not.EqualTo(0u),
+                "NGO must import the canonical player prefab with a non-zero hash.");
+
+            var identities =
+                playerPrefab.GetComponentsInChildren<PartyNightNetworkPlayer>(true);
+            Assert.That(identities, Has.Length.EqualTo(1));
+            Assert.That(identities[0].gameObject, Is.SameAs(playerPrefab));
+
+            Assert.That(playerPrefab.GetComponent<CharacterController>(), Is.Null);
+            Assert.That(
+                playerPrefab.GetComponent<PartyNightCharacterMotor>(),
+                Is.Null);
+            Assert.That(
+                playerPrefab.GetComponent<PartyNightLocalPlayerController>(),
+                Is.Null);
+        }
+
+        [Test]
         public void DefaultFoundationSceneIsNotAuthoritative()
         {
             var bootstrap = FindBootstrap();
@@ -133,6 +166,10 @@ namespace PartyNight.Gameplay.Tests
             Assert.That(bootstrap.NetworkManager.IsServer, Is.False);
             Assert.That(bootstrap.NetworkManager.IsClient, Is.False);
             Assert.That(bootstrap.IsAuthoritativeServer, Is.False);
+            Assert.That(
+                FindAllNetworkPlayers(),
+                Is.Empty,
+                "Configuring a player prefab must not spawn or claim a player by itself.");
         }
 
         [UnityTest]
@@ -156,6 +193,20 @@ namespace PartyNight.Gameplay.Tests
                 Is.False,
                 "Dedicated Party Night authority must not use NGO host mode.");
             Assert.That(bootstrap.IsAuthoritativeServer, Is.True);
+
+            var playerPrefab = FindComposition().NetworkPlayerPrefab;
+            Assert.That(
+                bootstrap.NetworkManager.NetworkConfig.PlayerPrefab,
+                Is.SameAs(playerPrefab));
+            Assert.That(
+                bootstrap.NetworkManager.NetworkConfig.Prefabs.Prefabs.Any(
+                    entry => entry.Prefab == playerPrefab),
+                Is.True,
+                "NGO must register the configured Party Night player prefab when the server starts.");
+            Assert.That(
+                FindAllNetworkPlayers(),
+                Is.Empty,
+                "A server-only session must not invent a local player object without a connected client.");
 
             bootstrap.Shutdown();
             yield return null;
@@ -188,6 +239,13 @@ namespace PartyNight.Gameplay.Tests
         {
             var matches = FindAllNetworkBootstraps();
             return matches.Length == 1 ? matches[0] : null;
+        }
+
+        private static PartyNightNetworkPlayer[] FindAllNetworkPlayers()
+        {
+            return Object.FindObjectsByType<PartyNightNetworkPlayer>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
         }
 
         private static PartyNightNetworkBootstrap[] FindAllNetworkBootstraps()
