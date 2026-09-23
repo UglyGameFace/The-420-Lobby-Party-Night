@@ -27,7 +27,7 @@ jobs:
       - name: Check out exact frozen PR #10 source
         uses: actions/checkout@v4
         with:
-          ref: b560ef5d992afefeb1d00424b3ebabf1b2aae07c
+          ref: 1f4a7b8902cb751f16f2a6647679cdb841d92c77
           path: project
 
       - name: Prove frozen source revision
@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           actual="$(git -C project rev-parse HEAD)"
           echo "SHADOW_FROZEN_REVISION=$actual"
-          test "$actual" = "b560ef5d992afefeb1d00424b3ebabf1b2aae07c"
+          test "$actual" = "1f4a7b8902cb751f16f2a6647679cdb841d92c77"
 
       - name: Copy exact production sources into shadow compile
         shell: bash
