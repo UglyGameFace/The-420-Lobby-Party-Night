@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/authoritative-foundation`
 
 State:
-**IN PROGRESS — REPOSITORY INSPECTION COMPLETE**
+**IMPLEMENTED — STATIC PASS; UNITY VALIDATION PENDING**
 
 ## Prior validated checkpoint
 
@@ -121,7 +121,28 @@ Before merge:
 11. exact-head merge protection and post-merge static validation pass;
 12. ACTIVE_TASK closes on main.
 
+## Implemented
+
+- added isolated `PartyNight.Networking` runtime assembly;
+- added explicit None / DedicatedServer / Client roles;
+- added one canonical `PartyNightNetworkBootstrap`;
+- bootstrap owns one NGO `NetworkManager` and one `UnityTransport`;
+- added dedicated-server and client startup paths;
+- added `UNITY_SERVER` server-only autostart;
+- intentionally exposed no host-authority startup path;
+- composed exactly one bootstrap into the existing foundation scene;
+- preserved the existing CharacterController movement implementation;
+- added Play Mode coverage for composition, non-authoritative default state and real
+  server-only start/shutdown;
+- added static topology/dependency guards;
+- updated architecture/status documentation.
+
+GitHub static workflow #93:
+**PASS**
+
 ## Next step
 
-Implement the networking runtime assembly/bootstrap and regression tests without changing
-the already-validated Hotbox rules or movement implementation.
+Freeze the exact static-green head, then run Unity Build Automation with Edit Mode and
+Play Mode enabled. Unity must compile the networking assembly, preserve all existing
+Hotbox/movement tests, pass the new server-only networking tests, validate the current
+visual artifact and export the Linux Player before this task can merge.
