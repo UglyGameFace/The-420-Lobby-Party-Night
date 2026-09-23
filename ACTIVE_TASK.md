@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/server-authoritative-movement`
 
 State:
-**IN PROGRESS — ARCHITECTURE + NGO RPC CONTRACT INSPECTED**
+**IMPLEMENTED — STATIC PASS; UNITY VALIDATION PENDING**
 
 ## Prior validated checkpoint
 
@@ -151,7 +151,36 @@ Before merge:
 14. expected-head merge + post-merge static pass;
 15. ACTIVE_TASK closes on main.
 
+## Implemented
+
+- added `PartyNightNetworkMovement` in the gameplay assembly;
+- canonical network player now intentionally carries one CharacterController;
+- canonical network player reuses the existing `PartyNightCharacterMotor`;
+- canonical network player carries one network movement bridge;
+- network prefab still does not carry `PartyNightLocalPlayerController`;
+- owner submission surface carries desired world direction, jump and sequence only;
+- NGO RPC targets the server and requires owner invoke permission;
+- server independently verifies RPC sender equals `OwnerClientId`;
+- server rejects non-finite, duplicate and out-of-order movement intents;
+- server clamps accepted planar direction to unit magnitude;
+- stale intent expires after 0.25 seconds;
+- jump intent is consumed once by the authoritative simulation step;
+- only the server advances `PartyNightCharacterMotor`;
+- authoritative position and yaw are server-write-only NetworkVariables;
+- non-server instances disable CharacterController and apply replicated pose directly;
+- Play Mode coverage spawns the real canonical prefab under a dedicated server;
+- Play Mode coverage proves authoritative movement advances the existing motor;
+- Play Mode coverage proves wrong-owner, malformed, duplicate and stale intents are rejected;
+- editor/static validation updated for the intentional prefab evolution;
+- no host path, owner-writable pose or client-authoritative position RPC exists;
+- local movement, local controller, orbit camera and Hotbox rules remain unchanged.
+
+GitHub static workflow #133:
+**PASS**
+
 ## Next step
 
-Implement the authoritative movement bridge and canonical prefab upgrade, then exhaust
-static/testable repository validation before spending another Unity Cloud build.
+Freeze the exact static-green head, then spend one Unity Build Automation run on the
+complete movement slice. Unity must compile NGO RPC/NetworkVariable ILPP, preserve all
+existing tests, pass the new server-authoritative movement tests, validate the exact
+visual artifact and export the Linux Player before this task can merge.
