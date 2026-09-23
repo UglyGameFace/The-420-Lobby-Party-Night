@@ -215,14 +215,12 @@ namespace PartyNight.Networking
         {
             if (!initialized ||
                 manager != networkManager ||
-                mode != PartyNightNetworkMode.Client ||
-                !manager.IsClient)
+                mode != PartyNightNetworkMode.Client)
             {
                 return;
             }
 
-            if (eventData.EventType == ConnectionEvent.ClientDisconnected &&
-                eventData.ClientId == manager.LocalClientId)
+            if (eventData.EventType == ConnectionEvent.ClientDisconnected)
             {
                 SetMode(PartyNightNetworkMode.None);
             }
