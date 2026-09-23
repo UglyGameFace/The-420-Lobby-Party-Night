@@ -1,0 +1,107 @@
+name: Unity GameCI Zero-DevOps Probe
+
+on:
+  push:
+    branches:
+      - ci/gameci-unity-probe
+
+permissions:
+  contents: read
+
+jobs:
+  unity-probe:
+    name: Real Unity test + Linux build probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      FROZEN_PR10_SHA: 4a12c1ff911868e522d7d439cd996d91434440bb
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+    steps:
+      - name: Check out exact frozen PR #10 head
+        uses: actions/checkout@v4
+        with:
+          ref: 4a12c1ff911868e522d7d439cd996d91434440bb
+          fetch-depth: 0
+
+      - name: Prove exact revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          echo "GAMECI_FROZEN_REVISION=$actual"
+          test "$actual" = "$FROZEN_PR10_SHA"
+
+      - name: Unity Personal license preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in UNITY_LICENSE UNITY_EMAIL UNITY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::GameCI cannot launch real Unity until the three Unity Personal secrets are configured."
+            exit 1
+          fi
+          echo "Unity credential preflight passed. Secret values are intentionally not printed."
+
+      - name: Run real Unity Edit + Play Mode tests
+        id: unity_tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ env.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ env.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ env.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          unityVersion: 6000.3.24f1
+          testMode: all
+          artifactsPath: artifacts
+
+      - name: Upload Unity test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameci-unity-test-artifacts
+          path: |
+            artifacts
+            VisualValidation
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Build Linux Player with real Unity
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ env.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ env.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ env.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          unityVersion: 6000.3.24f1
+          targetPlatform: StandaloneLinux64
+          buildsPath: build
+          buildName: PartyNightGameCIProbe
+
+      - name: Inspect Linux build payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== GAMECI LINUX BUILD ==="
+          find build -maxdepth 4 -type f -print | sort
+          test -n "$(find build -type f -name 'UnityPlayer.so' -print -quit)"
+          test -n "$(find build -type f -name '*.x86_64' -print -quit)"
+          echo "GAMECI_LINUX_BUILD_PAYLOAD=PASS"
+
+      - name: Upload Linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameci-linux-player
+          path: build
+          if-no-files-found: error
+          retention-days: 3
