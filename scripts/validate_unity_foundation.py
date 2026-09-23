@@ -860,6 +860,10 @@ def validate_networking_foundation() -> None:
     required_tests = (
         "FoundationSceneComposesExactlyOneNetworkBootstrap",
         "FoundationConfiguresCanonicalNetworkPlayerPrefab",
+        "GetComponent<CharacterController>()",
+        "GetComponent<PartyNightCharacterMotor>()",
+        "GetComponent<PartyNightNetworkMovement>()",
+        "GetComponent<PartyNightLocalPlayerController>()",
         "FindAllNetworkPlayers",
         "NetworkConfig.PlayerPrefab",
         "NetworkConfig.Prefabs.Prefabs.Any",
