@@ -123,7 +123,10 @@ with tempfile.TemporaryDirectory(prefix="party-night-owner-mutation-") as tmp:
             print(f"OWNER_MUTATION_SETUP | FAIL | {name} | token not found")
             raise SystemExit(1)
 
-        if name == "remove_localclient_playerobject":
+        if name in (
+            "remove_localclient_playerobject",
+            "remove_player_despawn_signal",
+        ):
             text = text.replace(old, new)
         else:
             text = text.replace(old, new, 1)
