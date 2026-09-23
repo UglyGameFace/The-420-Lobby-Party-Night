@@ -91,3 +91,9 @@ jobs:
             --project probe/ci/owner_shadow/PartyNight.OwnerShadow.csproj \
             --configuration Release \
             --no-build
+
+      - name: Prove owner-handoff static guards reject mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 probe/ci/owner_shadow/run_owner_mutations.py project
