@@ -19,7 +19,7 @@ Working branch:
 `multiplayer/server-authoritative-movement`
 
 State:
-**IMPLEMENTED — STATIC PASS; UNITY REVALIDATION PENDING AFTER BUILD #22 TEST CONTRACT FIX**
+**IMPLEMENTED — STATIC + SHADOW + MUTATION PASS; UNITY REVALIDATION PENDING**
 
 ## Prior validated checkpoint
 
@@ -175,7 +175,11 @@ Before merge:
 - no host path, owner-writable pose or client-authoritative position RPC exists;
 - local movement, local controller, orbit camera and Hotbox rules remain unchanged.
 
-GitHub static workflow #133:
+Historical implementation static workflow #133:
+**PASS**
+
+Current hardened static workflow #139 at
+`b560ef5d992afefeb1d00424b3ebabf1b2aae07c`:
 **PASS**
 
 ## Build #22 findings
@@ -224,9 +228,68 @@ Correction:
 No movement implementation, authority rule, Hotbox logic, camera logic, transport,
 package version or prefab hash was changed in response to Build #22.
 
+## Zero-quota validation hardening
+
+A license-free shadow runtime now checks the exact production movement sources outside
+Unity so deterministic authority mistakes can be caught without spending Unity DevOps
+quota.
+
+Current hardened head before this status-only ledger update:
+
+`b560ef5d992afefeb1d00424b3ebabf1b2aae07c`
+
+Confirmed:
+- static workflow #139 passed;
+- exact production `PartyNightCharacterMotor`,
+  `PartyNightNetworkMovement` and `PartyNightNetworkPlayer` compiled against the
+  strict shadow API with 0 warnings and 0 errors;
+- shadow runtime passed 84/84 authority and movement checks;
+- mutation baseline passed;
+- mutation guards rejected 9/9 deliberately broken authority/test variants.
+
+Mutation coverage explicitly rejects:
+- owner-writable authoritative pose;
+- movement RPC that is not owner-only;
+- movement RPC that does not target the server;
+- removal of sender-versus-owner validation;
+- clients regaining an authoritative CharacterController;
+- introduction of NGO host mode;
+- PartyNightLocalPlayerController on the canonical network prefab;
+- removal of required authoritative-movement Play Mode coverage;
+- restoration of the stale identity-only CharacterController `Is.Null` assertion.
+
+The final mutation exposed a real static-validator blind spot: the validator previously
+proved that the component assertion existed but did not prove whether it required
+`Is.Not.Null` or `Is.Null`. That is the same failure class that escaped into Build #22.
+
+The validator was hardened to require:
+- CharacterController: `Is.Not.Null`;
+- PartyNightCharacterMotor: `Is.Not.Null`;
+- PartyNightNetworkMovement: `Is.Not.Null`;
+- PartyNightLocalPlayerController: `Is.Null`.
+
+This hardening changed only static validation. Runtime code, prefab composition and
+Play Mode test behavior remain unchanged.
+
 ## Next step
 
-Pass GitHub static CI on the Build #22 stale-test correction, inspect the exact delta,
-and freeze the new head. Then spend one Unity Build Automation run on that frozen SHA.
-The expected Play Mode count remains 17, with all 17 required to pass before visual
-validation and Linux export can count.
+Freeze this status-only ledger update as the final exact head, then require:
+1. GitHub static validation PASS on that exact head;
+2. shadow runtime 84/84 PASS on that exact head;
+3. mutation guards 9/9 PASS on that exact head.
+
+After those zero-quota gates are green, the only remaining pre-merge proof is a real
+Unity revalidation of that exact final SHA.
+
+The Unity run must prove:
+- Unity 6000.3.24f1 (4e7b9b5b6244);
+- Edit Mode exit 0;
+- exactly 17 Play Mode results, all 17 Passed;
+- corrected `FoundationConfiguresCanonicalNetworkPlayerPrefab` passes;
+- all three authoritative-movement tests pass;
+- exact-revision visual validation passes;
+- Linux Player export succeeds;
+- artifact inspection passes.
+
+Do not start #11 until PR #10 is merged, post-merge static validation passes and
+ACTIVE_TASK is closed on main.
