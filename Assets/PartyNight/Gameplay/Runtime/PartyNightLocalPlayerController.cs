@@ -10,8 +10,10 @@ namespace PartyNight.Gameplay
         private PartyNightOrbitCamera orbitCamera;
         private PartyNightInputReader inputReader;
         private bool initialized;
+        private bool automaticMotorControlEnabled = true;
 
         public bool IsInitialized => initialized;
+        public bool AutomaticMotorControlEnabled => automaticMotorControlEnabled;
         public PartyNightCharacterMotor Motor => motor;
         public PartyNightOrbitCamera OrbitCamera => orbitCamera;
 
@@ -39,12 +41,34 @@ namespace PartyNight.Gameplay
 
         private void Update()
         {
-            if (!initialized)
+            if (!initialized || !automaticMotorControlEnabled)
             {
                 return;
             }
 
-            Tick(inputReader.ReadFrame(), Time.deltaTime);
+            Tick(ReadInputFrame(), Time.deltaTime);
+        }
+
+        public PartyNightInputFrame ReadInputFrame()
+        {
+            if (!initialized)
+            {
+                throw new System.InvalidOperationException(
+                    "PartyNightLocalPlayerController must be initialized before reading input.");
+            }
+
+            return inputReader.ReadFrame();
+        }
+
+        public void SetAutomaticMotorControlEnabled(bool enabled)
+        {
+            if (!initialized)
+            {
+                throw new System.InvalidOperationException(
+                    "PartyNightLocalPlayerController must be initialized before changing control ownership.");
+            }
+
+            automaticMotorControlEnabled = enabled;
         }
 
         public void Tick(PartyNightInputFrame frame, float deltaTime)
@@ -82,6 +106,7 @@ namespace PartyNight.Gameplay
         {
             inputReader?.Dispose();
             inputReader = null;
+            automaticMotorControlEnabled = true;
             initialized = false;
         }
     }

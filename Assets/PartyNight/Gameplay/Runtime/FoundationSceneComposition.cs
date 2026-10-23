@@ -17,6 +17,7 @@ namespace PartyNight.Gameplay
         private GameObject localPlayer;
         private PartyNightOrbitCamera orbitCamera;
         private PartyNightLocalPlayerController localController;
+        private PartyNightNetworkOwnerBridge networkOwnerBridge;
         private HotboxHavocPrototype hotboxPrototype;
         [SerializeField]
         private GameObject networkPlayerPrefab;
@@ -28,6 +29,7 @@ namespace PartyNight.Gameplay
         public GameObject LocalPlayer => localPlayer;
         public PartyNightOrbitCamera OrbitCamera => orbitCamera;
         public PartyNightLocalPlayerController LocalController => localController;
+        public PartyNightNetworkOwnerBridge NetworkOwnerBridge => networkOwnerBridge;
         public HotboxHavocPrototype HotboxPrototype => hotboxPrototype;
         public PartyNightNetworkBootstrap NetworkBootstrap => networkBootstrap;
         public GameObject NetworkPlayerPrefab => networkPlayerPrefab;
@@ -56,6 +58,7 @@ namespace PartyNight.Gameplay
             GameObject newLocalPlayer = null;
             PartyNightOrbitCamera newOrbitCamera = null;
             PartyNightLocalPlayerController newLocalController = null;
+            PartyNightNetworkOwnerBridge newNetworkOwnerBridge = null;
             HotboxHavocPrototype newHotboxPrototype = null;
             PartyNightNetworkBootstrap newNetworkBootstrap = null;
             bool createdNetworkBootstrap = false;
@@ -119,6 +122,15 @@ namespace PartyNight.Gameplay
                     motor,
                     newOrbitCamera);
 
+                newNetworkOwnerBridge =
+                    newRuntimeRoot.AddComponent<PartyNightNetworkOwnerBridge>();
+                newNetworkOwnerBridge.Initialize(
+                    newNetworkBootstrap,
+                    newLocalController,
+                    newOrbitCamera,
+                    newLocalPlayer.transform,
+                    newHotboxPrototype);
+
                 Physics.SyncTransforms();
 
                 runtimeRoot = newRuntimeRoot.transform;
@@ -126,6 +138,7 @@ namespace PartyNight.Gameplay
                 localPlayer = newLocalPlayer;
                 orbitCamera = newOrbitCamera;
                 localController = newLocalController;
+                networkOwnerBridge = newNetworkOwnerBridge;
                 hotboxPrototype = newHotboxPrototype;
                 networkBootstrap = newNetworkBootstrap;
             }

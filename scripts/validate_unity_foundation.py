@@ -539,6 +539,7 @@ def validate_gameplay_foundation() -> None:
         "Assets/PartyNight/Gameplay/Runtime/PartyNightOrbitCamera.cs",
         "Assets/PartyNight/Gameplay/Runtime/PartyNightLocalPlayerController.cs",
         "Assets/PartyNight/Gameplay/Runtime/PartyNightNetworkMovement.cs",
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightNetworkOwnerBridge.cs",
         "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs",
         "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundPhase.cs",
         "Assets/PartyNight/Gameplay/Runtime/HotboxHavocRoundController.cs",
@@ -649,6 +650,97 @@ def validate_gameplay_foundation() -> None:
 
 
 
+    local_controller = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightLocalPlayerController.cs"
+    )
+    owner_bridge = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightNetworkOwnerBridge.cs"
+    )
+    orbit_camera = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/PartyNightOrbitCamera.cs"
+    )
+    composition = read_required(
+        "Assets/PartyNight/Gameplay/Runtime/FoundationSceneComposition.cs"
+    )
+
+    for required in (
+        "AutomaticMotorControlEnabled",
+        "SetAutomaticMotorControlEnabled",
+        "ReadInputFrame",
+        "PartyNightInputReader.CreateFromProjectWideActions()",
+    ):
+        if required not in local_controller:
+            fail(f"local player controller missing input handoff contract: {required}")
+
+    if local_controller.count(
+        "PartyNightInputReader.CreateFromProjectWideActions()"
+    ) != 1:
+        fail("standalone local controller must own exactly one project-wide input reader")
+
+    if "Retarget(Transform followTarget)" not in orbit_camera:
+        fail("orbit camera must support ownership retargeting without a second camera")
+
+    owner_bridge_requirements = (
+        "networkManager.LocalClient.PlayerObject",
+        "networkManager.OnConnectionEvent",
+        "ConnectionEvent.ClientConnected",
+        "ConnectionEvent.ClientDisconnected",
+        "TryBindCurrentLocalPlayer",
+        "PartyNightNetworkMovement",
+        "SubmitOwnerIntent(",
+        "localController.ReadInputFrame()",
+        "orbitCamera.ApplyLook(",
+        "orbitCamera.PlanarRight",
+        "orbitCamera.PlanarForward",
+        "frame.JumpPressed",
+        "nextSequence = unchecked(sequence + 1u)",
+        "SetAutomaticMotorControlEnabled(!active)",
+        "standaloneCharacterController.enabled = !active",
+        "hotboxPrototype.gameObject.SetActive(false)",
+        "NetworkDespawned += HandleBoundPlayerDespawned",
+        "NetworkDespawned -= HandleBoundPlayerDespawned",
+    )
+    for required in owner_bridge_requirements:
+        if required not in owner_bridge:
+            fail(f"network owner bridge missing required contract: {required}")
+
+    forbidden_owner_bridge_tokens = (
+        "CreateFromProjectWideActions",
+        "Object.FindObjectsByType",
+        "GameObject.Find(",
+        "FindWithTag(",
+        "StartHost(",
+        "NetworkTransform",
+        "Rigidbody",
+    )
+    for forbidden in forbidden_owner_bridge_tokens:
+        if forbidden in owner_bridge:
+            fail(f"network owner bridge contains forbidden ownership/input path: {forbidden}")
+
+    if "transform.position =" in owner_bridge or "transform.rotation =" in owner_bridge:
+        fail("network owner bridge must not authoritatively write player transform state")
+
+    if "PartyNightNetworkOwnerBridge" not in composition:
+        fail("foundation composition must create the network owner bridge")
+    if composition.count("AddComponent<PartyNightNetworkOwnerBridge>()") != 1:
+        fail("foundation composition must create exactly one network owner bridge")
+    if "NetworkOwnerBridge => networkOwnerBridge" not in composition:
+        fail("foundation composition must expose the network owner bridge")
+
+    owner_bridge_tests = read_required(
+        "Assets/PartyNight/Tests/PlayMode/NetworkOwnerBridgeRuntimeTests.cs"
+    )
+    for required in (
+        "FoundationComposesOneOwnerBridgeInStandaloneMode",
+        "DedicatedServerSuppressesAndRestoresStandaloneAuthority",
+        "OwnerBridgeKeepsLookLocalAndMapsMoveThroughCameraBasis",
+        "NetworkPlayerRaisesDespawnLifecycleSignal",
+        "PARTY_NIGHT_TEST_RESULT",
+    ):
+        if required not in owner_bridge_tests:
+            fail(f"network owner bridge PlayMode coverage missing: {required}")
+
+
 def validate_networking_foundation() -> None:
     networking_asm_path = (
         "Assets/PartyNight/Networking/Runtime/PartyNight.Networking.asmdef"
@@ -693,6 +785,10 @@ def validate_networking_foundation() -> None:
         "Shutdown",
         "#if UNITY_SERVER",
         "IsAuthoritativeServer",
+        "ModeChanged",
+        "networkManager.OnConnectionEvent += HandleConnectionEvent",
+        "ConnectionEvent.ClientDisconnected",
+        "SetMode(PartyNightNetworkMode.None)",
     )
     for token in required_bootstrap_tokens:
         if token not in bootstrap:
@@ -740,6 +836,17 @@ def validate_networking_foundation() -> None:
         fail("PartyNightNetworkPlayer must derive from NGO NetworkBehaviour")
     if "PartyNight.Gameplay" in player_script or "PartyNight.Input" in player_script:
         fail("network player identity must not depend on gameplay/input assemblies")
+    player_despawn_contract = (
+        "public event System.Action<PartyNightNetworkPlayer> NetworkDespawned;",
+        "public override void OnNetworkDespawn()",
+        "NetworkDespawned?.Invoke(this);",
+    )
+    for token in player_despawn_contract:
+        if token not in player_script:
+            fail(
+                "network player identity must expose deterministic despawn lifecycle: "
+                + token
+            )
 
     player_prefab_path = (
         "Assets/PartyNight/Networking/Prefabs/PartyNightNetworkPlayer.prefab"
